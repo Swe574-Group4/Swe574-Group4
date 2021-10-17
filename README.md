@@ -22,7 +22,7 @@ Please see our valuable team members below. You can reach their repositories by 
 - Selin Kocakuşak
 - Umut Yılmaz
 
-**Project Communicator:** Selin Kocakuşak
+**Project Communicator:** Selin Kocakuşak 
 **Project Manager:**
 
 ## Getting Started <a name = "getting_started"></a>
