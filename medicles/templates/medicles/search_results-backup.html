@@ -1,0 +1,20 @@
+{% extends 'medicles/base.html' %}
+
+{% block title %}Search{% endblock title %}
+
+{% block content %}
+<h1>Search Results</h1>
+
+{% for article in articles %}
+    <div>
+        <h3><a href="{{ article.get_absolute_url }}">{{article.article_id}}</a></h3>
+        <h2>{{ article.article_title}} <button type="button"><a href="/tag/{{article.article_id}}">Add Tag</a></button></h2>
+        <p>{{article.article_abstract}}</p>
+        {% for tag_obj in article.tag_set.all %}
+            <span><a href="{{tag_obj.tag_value}}">{{tag_obj.tag_key}}</a></span>
+        {% endfor %}
+        <p>{{article.rank}}</p>
+    </div>
+{% endfor %}
+
+{% endblock content %}

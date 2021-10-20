@@ -1,0 +1,69 @@
+
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bootstrap 4 Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.js"></script> 
+</head>
+<body style="text-align:center;">
+<!-- Grey with black text -->
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+  <ul class="navbar-nav">
+    <li class="nav-item active">
+      <a class="nav-link" href="#">Active</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">Link</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#">Link</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link disabled" href="#">Disabled</a>
+    </li>
+  </ul>
+</nav>
+
+<h3 title="Tag me">Tagging</h3>
+
+
+<form  class="form-inline"  action="{% url 'medicles:tag' article_id %}" method="post">
+
+    {% csrf_token %}
+    <div class="autocomplete" style="width:600px;">
+    {{ form }}
+    </div>
+    <input type="submit" value="Submit">
+</form>
+
+<script type="text/javascript">
+jQuery(function() {
+    $("#id_tag_key").on('keyup', function(){
+        let value = $(this).val();
+        $.ajax({
+            url: "{% url 'medicles:ajax_load_tag' %}",
+            data: {
+              'tag_query': value 
+            },
+            dataType: 'json',
+            success: function (data) {
+                let tags = data.tags;
+                $("#id_tag_key").autocomplete({
+                source: tags,
+                minLength: 2 
+                });       
+            }
+        });        
+    });
+  });
+</script>
+</body>
+</html>
