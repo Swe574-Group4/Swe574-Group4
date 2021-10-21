@@ -102,3 +102,5 @@ def get_articles_with_details():
 
 print(get_articles_with_details())
 print(len(get_articles_with_details()))
+
+# example comment
