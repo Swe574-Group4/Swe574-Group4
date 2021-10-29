@@ -23,8 +23,8 @@ Please see our valuable team members below. You can reach their repositories by 
 - [Selin Kocakuşak](https://github.com/selinkocakusak)
 - [Umut Yılmaz](https://github.com/yilmaz-umut)
 
-**Project Communicator:** Selin Kocakuşak \
-**Project Manager:**
+**Project Communicator:** Selin Kocakuşak 
+
 
 ## Getting Started <a name = "getting_started"></a>
 
