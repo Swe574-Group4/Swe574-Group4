@@ -37,7 +37,7 @@ USER appuser
 #-------------------------------------------------------------------------
 # Install OpenSSH and set the password for root to "Docker!". In this example, "apk add" is the install instruction for an Alpine Linux-based image.
 USER root
-RUN apt-get update && apt-get install openssh \
+RUN apt-get update && apt-get install openssh-server -y \
      && echo "root:Docker!" | chpasswd 
 
 # Copy the sshd_config file to the /etc/ssh/ directory
@@ -53,8 +53,8 @@ RUN chmod +x /tmp/ssh_setup.sh \
 EXPOSE 80 2222
 #--------------------------------------------------------------------------
 
-#CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 pubmed_project.wsgi"]
+CMD ["sh", "-c", "/usr/sbin/sshd && python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 pubmed_project.wsgi"]
 
-COPY init.sh /usr/local/bin/
-RUN chmod u+x /usr/local/bin/init.sh
-ENTRYPOINT [ "init.sh'" ]
+# COPY init.sh /usr/local/bin/
+# RUN chmod u+x /usr/local/bin/init.sh
+# ENTRYPOINT [ "/usr/local/bin/init.sh'" ]
