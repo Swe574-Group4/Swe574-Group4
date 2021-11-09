@@ -33,3 +33,5 @@ USER appuser
 # Based on this: https://markgituma.medium.com/kubernetes-local-to-production-with-django-3-postgres-with-migrations-on-minikube-31f2baa8926e
 # I changed it to test. Remove comment below whne you push to GitHub.
 # CMD ["gunicorn", "--bind", "0.0.0.0:8000", "pubmed_project.wsgi"]
+
+CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 pubmed_project.wsgi"]

@@ -79,29 +79,29 @@ WSGI_APPLICATION = 'pubmed_project.wsgi.application'
 
 # Change host to 'postgres' when pushing to GitHub.
 # Change host to 'db' when using local docker.
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'medicles',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db',
-        'PORT': '5432'
-    }
-}
-
-# This config uses Azure PostgresDB with local runserver.
-# Change running in local environment.
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'medicles',
 #         'USER': 'postgres',
-#         'PASSWORD': 'Moda2020!',
-#         'HOST': 'newdjangodb.postgres.database.azure.com',
+#         'PASSWORD': 'postgres',
+#         'HOST': 'db',
 #         'PORT': '5432'
 #     }
 # }
+
+# This config uses Azure PostgresDB with local runserver.
+# Change running in local environment.
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'medicles',
+        'USER': 'postgres',
+        'PASSWORD': '2RC2gTHn5KytQ',
+        'HOST': 'pgswe574dev.postgres.database.azure.com',
+        'PORT': '5432'
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
