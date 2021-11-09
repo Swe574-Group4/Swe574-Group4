@@ -49,12 +49,12 @@ COPY ssh_setup.sh /tmp
 RUN chmod +x /tmp/ssh_setup.sh \
     && (sleep 1;/tmp/ssh_setup.sh 2>&1 > /dev/null)
 
-# Open port 2222 for SSH access
+# Open port 2222 for SSH accesss
 EXPOSE 80 2222
 #--------------------------------------------------------------------------
 
-CMD ["sh", "-c", "/usr/sbin/sshd && python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 pubmed_project.wsgi"]
+# CMD ["sh", "-c", "/usr/sbin/sshd && python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 pubmed_project.wsgi"]
 
-# COPY init.sh /usr/local/bin/
-# RUN chmod u+x /usr/local/bin/init.sh
-# ENTRYPOINT [ "/usr/local/bin/init.sh'" ]
+COPY init.sh /usr/local/bin/
+RUN chmod u+x /usr/local/bin/init.sh 
+ENTRYPOINT [ "init.sh'" ]
