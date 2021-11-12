@@ -54,7 +54,7 @@ EXPOSE 8000 2222
 #--------------------------------------------------------------------------
 RUN chmod u+x /app/init.sh 
 CMD ["sh", "-c", "/usr/sbin/sshd && python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 pubmed_project.wsgi"]
-# CMD ["sh", "-c", "service ssh sstart && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+# CMD ["sh", "-c", "service ssh start && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
 # COPY init.sh /usr/local/bin/
 
 # CMD [ "sh", "-c", "./app/init.sh"]
