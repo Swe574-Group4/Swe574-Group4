@@ -33,3 +33,28 @@ USER appuser
 # Based on this: https://markgituma.medium.com/kubernetes-local-to-production-with-django-3-postgres-with-migrations-on-minikube-31f2baa8926e
 # I changed it to test. Remove comment below whne you push to GitHub.
 # CMD ["gunicorn", "--bind", "0.0.0.0:8000", "pubmed_project.wsgi"]
+
+#-------------------------------------------------------------------------
+# Install OpenSSH and set the password for root to "Docker!". In this example, "apk add" is the install instruction for an Alpine Linux-based image.
+USER root
+RUN apt-get update && apt-get install openssh-server -y \
+     && echo "root:Docker!" | chpasswd 
+
+# Copy the sshd_config file to the /etc/ssh/ directory
+COPY sshd_config /etc/ssh/
+
+# Copy and configure the ssh_setup file
+RUN mkdir -p /tmp
+COPY ssh_setup.sh /tmp
+RUN chmod +x /tmp/ssh_setup.sh \
+    && (sleep 1;/tmp/ssh_setup.sh 2>&1 > /dev/null)
+
+# Open port 2222 for SSH accesss
+EXPOSE 8000 2222
+#--------------------------------------------------------------------------
+RUN chmod u+x /app/init.sh 
+CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 pubmed_project.wsgi"]
+# CMD ["sh", "-c", "service ssh start && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+# COPY init.sh /usr/local/bin/
+
+# CMD [ "sh", "-c", "./app/init.sh"]

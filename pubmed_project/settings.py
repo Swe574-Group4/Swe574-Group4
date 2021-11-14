@@ -21,7 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ee%aggxdqkr@d_-hz2&^@g2ru_d4ywvjn-@+53p+&q9)j)+#ln'
+# SECRET_KEY = 'django-insecure-ee%aggxdqkr@d_-hz2&^@g2ru_d4ywvjn-@+53p+&q9)j)+#ln'
+SECRET_KEY = os.environ['SECRET_KEY']
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -79,16 +81,16 @@ WSGI_APPLICATION = 'pubmed_project.wsgi.application'
 
 # Change host to 'postgres' when pushing to GitHub.
 # Change host to 'db' when using local docker.
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'medicles',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db',
-        'PORT': '5432'
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'medicles',
+#         'USER': 'postgres',
+#         'PASSWORD': 'postgres',
+#         'HOST': 'db',
+#         'PORT': '5432'
+#     }
+# }
 
 # This config uses Azure PostgresDB with local runserver.
 # Change running in local environment.
@@ -97,11 +99,24 @@ DATABASES = {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'medicles',
 #         'USER': 'postgres',
-#         'PASSWORD': 'Moda2020!',
-#         'HOST': 'newdjangodb.postgres.database.azure.com',
+#         'PASSWORD': '2RC2gTHn5KytQ',
+#         'HOST': 'pgswe574dev.postgres.database.azure.com',
 #         'PORT': '5432'
 #     }
 # }
+
+# Environment Vars
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ['DATABASE_NAME'],
+        'USER': os.environ['DATABASE_USER'],
+        'PASSWORD': os.environ['DATABASE_PASSWORD'],
+        'HOST': os.environ['DATABASE_HOSTNAME'],
+        'PORT': int(os.environ['DATABASE_PORT'])
+    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
