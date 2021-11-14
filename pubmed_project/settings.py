@@ -79,8 +79,9 @@ WSGI_APPLICATION = 'pubmed_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-# Change host to 'postgres' when pushing to GitHub.
-# Change host to 'db' when using local docker.
+# ATTENTION !!!
+# While running in local either comment out below section or
+# use 'Production Database Configuration' with Environment Variables.
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
@@ -92,20 +93,9 @@ WSGI_APPLICATION = 'pubmed_project.wsgi.application'
 #     }
 # }
 
-# This config uses Azure PostgresDB with local runserver.
-# Change running in local environment.
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'medicles',
-#         'USER': 'postgres',
-#         'PASSWORD': '2RC2gTHn5KytQ',
-#         'HOST': 'pgswe574dev.postgres.database.azure.com',
-#         'PORT': '5432'
-#     }
-# }
 
-# Environment Vars
+# Production Database Configuration with Environment Variables
+# If you use below configuration set local env variables using the values above.
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
