@@ -12,6 +12,15 @@ services:
     ports:
       - "5432:5432"
   promed:
+      volumes:
+        - .:/app
+      environment:
+        - SECRET_KEY=django-insecure-ee%aggxdqkr@d_-hz2&^@g2ru_d4ywvjn-@+53p+&q9)j)+#ln
+        - DATABASE_NAME=medicles
+        - DATABASE_USER=ramazan
+        - DATABASE_PASSWORD= ramazan123
+        - DATABASE_HOSTNAME=db
+        - DATABASE_PORT=5432
       build:
         context: .
         dockerfile: ./Dockerfile

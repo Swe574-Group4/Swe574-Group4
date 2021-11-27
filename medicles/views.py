@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramDistance
 from medicles.forms import TagForm
 from django.core import paginator
 from django.http.response import Http404
@@ -11,6 +12,7 @@ from .forms import SingupForm, TagForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import IntegrityError
+from django.contrib.postgres.aggregates import StringAgg
 
 # Create your views here.
 
@@ -19,19 +21,31 @@ def index(request):
     return render(request, 'medicles/index.html')
 
 
+# def search(request):
+#     search_term = request.GET.get('q', None)
+#     #search_term = 'covid'
+#     if not search_term:
+#         render(request, 'medicles/index.html')
+#         #raise Http404('Please enter a word at least!')
+    
+#     articles = Article.objects.search(search_term)
+#     context = {'articles': articles}
+#     #print(context)
+
+
+#     return render(request, 'medicles/search_results.html', {'articles': articles}) # add context variable if you want to go back
+
 def search(request):
     search_term = request.GET.get('q', None)
-    #search_term = 'covid'
     if not search_term:
-        render(request, 'medicles/index.html')
-        #raise Http404('Please enter a word at least!')
-    
-    articles = Article.objects.search(search_term)
-    context = {'articles': articles}
-    #print(context)
+         render(request, 'medicles/index.html')
+    search_vector = SearchVector('keyword_list', weight = 'A') + SearchVector('article_title', weight = 'B') 
+    search_term_updated = SearchQuery(search_term, search_type='websearch')
+    articles = Article.objects.annotate(distance=TrigramDistance('keyword_list', search_term_updated)).filter(distance__lte=0.3).order_by('distance')
+    articles = Article.objects.annotate(search=SearchVector('keyword_list', 'article_title'),).filter(search=SearchQuery(search_term))
+    articles = Article.objects.annotate(rank=SearchRank(search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4).order_by('-rank')
+    return render(request, 'medicles/search_results.html', {'articles': articles})
 
-
-    return render(request, 'medicles/search_results.html', {'articles': articles}) # add context variable if you want to go back
 
 ''' Working tag form. Simple, just adds one field to Article model.
 def add_tag(request, article_id):
