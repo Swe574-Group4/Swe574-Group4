@@ -23,7 +23,7 @@ class Article(models.Model):
     search_vector = SearchVectorField(null=True, )
     #tags = models.TextField(blank=True, null=True)
 
-    objects = ArticleManager()
+    #objects = ArticleManager()
 
 
     def __str__(self):

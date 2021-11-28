@@ -23,7 +23,7 @@ urlpatterns = [
     # Auth pages. Log in, Log out, Sign up
     path('accounts/', include('django.contrib.auth.urls')),
 
-    path('signup/', views.signup, name='signup')
+    path('signup/', views.signup, name='signup'),
 
 
 ]

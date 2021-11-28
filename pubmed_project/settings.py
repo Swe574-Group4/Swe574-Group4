@@ -42,7 +42,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'coverage',
+    'django.contrib.sites',
+    'actstream'
 ]
+
+SITE_ID = 1
 
 
 MIDDLEWARE = [
@@ -159,3 +163,4 @@ LOGIN_REDIRECT_URL = 'medicles:index'
 LOGOUT_REDIRECT_URL = 'medicles:index'
 
 TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
+

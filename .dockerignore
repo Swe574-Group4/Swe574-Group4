@@ -23,4 +23,10 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
-README.md
+**/images
+**/.github
+**/.venv
+**/TEST*.xml
+**/aks*.yaml
+**/*pipelines.yml
+**/README.md
