@@ -39,7 +39,7 @@ def search(request):
     search_term = request.GET.get('q', None)
     if not search_term:
          render(request, 'medicles/index.html')
-    search_vector = SearchVector('keyword_list', weight = 'A') + SearchVector('article_title', weight = 'B') 
+    search_vector = SearchVector('keyword_list', weight = 'A') + SearchVector('article_title', weight = 'B') + SearchVector('article_abstract', weight = 'B') 
     search_term_updated = SearchQuery(search_term, search_type='websearch')
     articles = Article.objects.annotate(distance=TrigramDistance('keyword_list', search_term_updated)).filter(distance__lte=0.3).order_by('distance')
     articles = Article.objects.annotate(search=SearchVector('keyword_list', 'article_title'),).filter(search=SearchQuery(search_term))
