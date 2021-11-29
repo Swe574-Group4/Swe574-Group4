@@ -24,6 +24,13 @@ services:
       build:
         context: .
         dockerfile: ./Dockerfile
+      environment:
+        - DATABASE_NAME=medicles
+        - DATABASE_USER=postgres
+        - DATABASE_PASSWORD=postgres
+        - DATABASE_HOSTNAME=db
+        - DATABASE_PORT=5432
+        - SECRET_KEY=django-insecure-ee%aggxdqkr@d_-hz2&^@g2ru_d4ywvjn-@+53p+&q9)j)+#ln
       command: >
         sh -c "python manage.py makemigrations &&
                python manage.py migrate &&
