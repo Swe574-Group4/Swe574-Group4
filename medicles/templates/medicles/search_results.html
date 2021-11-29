@@ -104,6 +104,7 @@ form.example::after {
   <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
   <a href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-search"></i> Search</a>
   {% if user.is_authenticated %}
+      <a href="{% url 'medicles:user_search' %}">User Search</a>
     <a>
           Hi {{ user.username }}!
           <a href="{% url 'medicles:logout' %}">Log Out</a>

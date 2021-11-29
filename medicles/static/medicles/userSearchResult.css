@@ -1,0 +1,32 @@
+.userList {
+  margin: auto;
+  border-radius: 5px;
+  background-color: #f2f2f2;
+  width: 50%;
+  border: 3px solid green;
+  padding: 10px;
+
+}
+
+#userName{
+   margin: auto;
+   width: 4%;
+   padding: 10px;
+}
+
+.registerbtn {
+  background-color: #04AA6D;
+  color: white;
+  padding: 16px 20px;
+  margin: auto;
+  border: none;
+  cursor: pointer;
+  width: 15%;
+  opacity: 0.9;
+}
+
+.center {
+  margin: auto;
+  width: 50%;
+  padding: 10px;
+}

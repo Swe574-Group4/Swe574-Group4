@@ -27,7 +27,7 @@ def index(request):
 #     if not search_term:
 #         render(request, 'medicles/index.html')
 #         #raise Http404('Please enter a word at least!')
-    
+
 #     articles = Article.objects.search(search_term)
 #     context = {'articles': articles}
 #     #print(context)
@@ -78,7 +78,7 @@ def add_tag(request, article_id):
     alert_flag = False
     if request.method =='POST':
         form = TagForm(request.POST)
-        
+
         tag_request_from_browser = ''
         if form.is_valid():
             article_will_be_updated = Article.objects.get(pk=article_id) # Gets the article that will be associated
@@ -88,7 +88,7 @@ def add_tag(request, article_id):
             print(tag_request_from_browser)
             tag_key = tag_request_from_browser[0]
             user_def_tag_key = form.cleaned_data['user_def_tag_key']
-            
+
             # If Wikidata tag_key and user defined user_def_tag_key exists. It will create user_def_tag_key.
             if tag_key and user_def_tag_key:
                 try:
@@ -122,7 +122,7 @@ def add_tag(request, article_id):
                     #return HttpResponseRedirect('medicles:index')
                 except IntegrityError:
                     alert_flag = True
-            
+
             # If Wikidata tag key does not exist. User defined user_def_tag_key will be created.
             elif not tag_key:
                 try:
@@ -165,7 +165,7 @@ def signup(request):
             form.save()
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password1')
-            print(username, password)
+            #print(username, password)
             user = authenticate(username=username, password=password)
             login(request, user)
             return redirect('medicles:index')
@@ -175,3 +175,23 @@ def signup(request):
     return render(request, 'medicles/signup.html', {'form': form})
 
 
+def profile(request, user_id):
+    user = get_object_or_404(User, pk=user_id)
+
+    return render(request, 'medicles/profile.html', {'user': user})
+
+
+def user_search(request):
+    return render(request, 'medicles/user_search.html')
+
+
+def user_search_results(request):
+    search_term = request.GET.get('name', None)
+    if not search_term:
+        render(request, 'medicles/user_search.html')
+    search_vector = SearchVector('username', weight='A') + SearchVector('first_name', weight='B') + SearchVector(
+        'last_name', weight='B')
+    search_term_updated = SearchQuery(search_term, search_type='websearch')
+    users = User.objects.annotate(rank=SearchRank(search_vector, search_term_updated, cover_density=True)).filter(
+        rank__gte=0.4).order_by('-rank')
+    return render(request, 'medicles/user_search_results.html', {'users': users})
