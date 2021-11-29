@@ -86,20 +86,20 @@ WSGI_APPLICATION = 'pubmed_project.wsgi.application'
 # ATTENTION !!!
 # While running in local either comment out below section or
 # use 'Production Database Configuration' with Environment Variables.
-#DATABASES = {
+# DATABASES = {
 #     'default': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': 'medicles',
-#        'USER': 'postgres',
-#        'PASSWORD': 'postgres',
-#        'HOST': 'db',
-#        'PORT': '5432'
-#    }
- #}
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'medicles',
+#         'USER': 'postgres',
+#         'PASSWORD': 'postgres',
+#         'HOST': 'db',
+#         'PORT': '5432'
+#     }
+# }
 
 
-""" # Production Database Configuration with Environment Variables
-# If you use below configuration set local env variables using the values above."""
+# Production Database Configuration with Environment Variables
+# If you use below configuration set local env variables using the values above.
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -149,7 +149,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'),]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'), ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -163,4 +163,3 @@ LOGIN_REDIRECT_URL = 'medicles:index'
 LOGOUT_REDIRECT_URL = 'medicles:index'
 
 TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
-
