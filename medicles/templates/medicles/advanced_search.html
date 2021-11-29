@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+
+{% extends "medicles/index.html" %}
+{% block body_block %}
+{% csrf_token %}
+
+<form class="example2" action="{% url 'medicles:advanced_search' %}"
+    style="text-align:left;margin: 10px;max-width:500px;" method="get">
+    <label for="term" id="text">Search: </label>
+    <input type="text" placeholder="Search.." name="term" class="w3-white w3-button w3-round-xlarge">
+    <label for="term">Author: </label>
+    <input type="text" placeholder="Search.." name="author" class="w3-white w3-button w3-round-xlarge">
+    <br>
+    <label for="term">Date: </label>
+    <input type="date" name="start-date" class="w3-round-xxlarge">
+    <input type="date" name="end-date" class="w3-round-xxlarge">
+    <br>
+    <label for="term">Keywords: </label>
+    <input type="text" placeholder="Search.." name="keywords" class="w3-white w3-button w3-round-xlarge">
+    <button type="submit" class="w3-round-xlarge"><i class="fa fa-search"></i></button>
+    <br>
+    <h4>{{failure}}</a></h4>
+
+</form>
+
+{% endblock %}
