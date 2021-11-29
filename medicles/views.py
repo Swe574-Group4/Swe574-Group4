@@ -210,7 +210,7 @@ def signup(request):
             form.save()
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password1')
-            print(username, password)
+            #print(username, password)
             user = authenticate(username=username, password=password)
             login(request, user)
             return redirect('medicles:index')
@@ -218,3 +218,25 @@ def signup(request):
         print("not working")
         form = SingupForm()
     return render(request, 'medicles/signup.html', {'form': form})
+
+
+def profile(request, user_id):
+    user = get_object_or_404(User, pk=user_id)
+
+    return render(request, 'medicles/profile.html', {'user': user})
+
+
+def user_search(request):
+    return render(request, 'medicles/user_search.html')
+
+
+def user_search_results(request):
+    search_term = request.GET.get('name', None)
+    if not search_term:
+        render(request, 'medicles/user_search.html')
+    search_vector = SearchVector('username', weight='A') + SearchVector('first_name', weight='B') + SearchVector(
+        'last_name', weight='B')
+    search_term_updated = SearchQuery(search_term, search_type='websearch')
+    users = User.objects.annotate(rank=SearchRank(search_vector, search_term_updated, cover_density=True)).filter(
+        rank__gte=0.4).order_by('-rank')
+    return render(request, 'medicles/user_search_results.html', {'users': users})

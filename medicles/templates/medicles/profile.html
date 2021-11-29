@@ -1,15 +1,13 @@
-
-{% load static %}
-
 <!DOCTYPE html>
 <html>
 <head>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.js"></script>
-<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 <style>
 body {
   margin: 0;
@@ -108,10 +106,10 @@ form.example::after {
 
 <div class="topnav" id="myTopnav">
   <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
-  <a href="#"><i class="fa fa-fw fa-search"></i> Search</a>
+  <a href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-search"></i> Search</a>
   {% if user.is_authenticated %}
-    <a href="{% url 'medicles:user_search' %}">User Search</a>
-      <a>
+      <a href="{% url 'medicles:user_search' %}">User Search</a>
+    <a>
           Hi {{ user.username }}!
           <a href="{% url 'medicles:logout' %}">Log Out</a>
   {% else %}
@@ -119,46 +117,21 @@ form.example::after {
            <a href="{% url 'medicles:signup' %}"><i class="fa fa-fw fa-address-book"></i> Signup</a>
     </a>
   {% endif %}
- 
+
   <a href="javascript:void(0);" class="icon" onclick="myFunction()">
     <i class="fa fa-bars"></i>
   </a>
 </div>
 
-<div class="w3-container w3-container-teal w3-padding-24 w3-margin-left">
-<h3 title="Tag me" class="w3-text-teal w3-left w3-text-opacity">Tag your selected article</h3>
-</div>
-<form  action="{% url 'medicles:tag' article_id %}" method="post" class="w3-container">
+<div class="w3-margin">
 
-    {% csrf_token %}
-    <div class="w3-margin-left">
-    <label for="tag_key"><b>Tag:</b></label>
-    <input type="text" placeholder="Enter your tag.." name="{{form.tag_key.name}}" id="{{form.tag_key.id_for_label}}" required class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray" style="width:60%">
-    <input type="submit" value="Add" class="w3-teal w3-button w3-round-xxlarge" style="width:10%">
+    <div class="w3-container">
+
+        <h1 class="w3-text-teal">Username: {{ user.username}}</h1>
+        <h1 class="w3-text-teal">email: {{ user.email}}</h1>
+
     </div>
-    
-</form>
+</div>
 
-<script type="text/javascript" >
-jQuery(function() {
-    $("#id_tag_key").on('keyup', function(){
-        let value = $(this).val();
-        $.ajax({
-            url: "{% url 'medicles:ajax_load_tag' %}",
-            data: {
-              'tag_query': value 
-            },
-            dataType: 'json',
-            success: function (data) {
-                let tags = data.tags;
-                $("#id_tag_key").autocomplete({
-                source: tags,
-                minLength: 2 
-                });       
-            }
-        });        
-    });
-  });
-</script>
 
 
