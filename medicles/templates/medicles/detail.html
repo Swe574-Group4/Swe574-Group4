@@ -135,15 +135,31 @@
 
     <div class="w3-container">
 
-        <div class="col-md-7 d-flex justify-content-between">
-            <h3 class="w3-text-teal"><a href="{% url 'medicles:detail' article.article_id %}">{{ article.article_title}}
-            </h3>
+        <!--        <div class="col-md-7 d-flex justify-content-between">-->
+        <h3 class="w3-text-teal"><a href="{% url 'medicles:detail' article.article_id %}">{{ article.article_title}}
+        </h3>
+
+         {% if  alreadyFavourited %}
+        <a href="{url 'follow_article' Article.article_id}" class="w3-container w3-container-teal  w3-margin-left">Remove from favorites
+        </a>
+
+        {% else %}
+        <a href="{url 'follow_article' Article.article_id}" class="w3-container w3-container-teal  w3-margin-left">AddX to Favorites
+        </a>
 
 
-            <a href="#" class="btn btn-outline-primary">Add to Favorites
-            </a>
+        {% endif %}
+        <!--        {% if user.is_authenticated %}-->
 
-        </div>
+        <!--        {% else %}-->
+        <!--        <div class="w3-container w3-container-teal  w3-margin-left">-->
+        <!--            <h4 title="" class="w3-text-teal w3-left w3-text-opacity">Please <a-->
+        <!--                    href="{% url 'medicles:login' %}">login</a>-->
+        <!--                to follow the article.</h4>-->
+        <!--        </div>-->
+        <!--        {% endif %}-->
+
+        <!--        </div>-->
 
         <h6><a class="w3-text-gray"><strong>PMID</strong>: {{ article.article_id }} <strong>Publish
             Date: </strong>: {{ article.pub_date }}</a></h6>

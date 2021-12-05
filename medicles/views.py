@@ -14,6 +14,7 @@ from django.contrib import messages
 from django.db import IntegrityError
 from django.contrib.postgres.aggregates import StringAgg
 
+
 # Create your views here.
 
 
@@ -55,14 +56,15 @@ def advanced_search(request):
         print(end_date)
         if Article.objects.filter(pub_date__range=(start_date, end_date)).exists():
             articles = Article.objects.filter(
-                article_title__icontains=search_term, author_list__icontains=author, pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).values()
+                article_title__icontains=search_term, author_list__icontains=author,
+                pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).values()
             return render(request, 'medicles/search_results.html', {'articles': articles})
         else:
             failure = "There is no articles between these dates. Please consider changing the Date Field."
             return render(request, 'medicles/advanced_search.html', {'failure': failure})
 
         # if articles != 0:
-            # return render(request, 'medicles/search_results.html', {'articles': articles})
+        # return render(request, 'medicles/search_results.html', {'articles': articles})
     else:
         return render(request, 'medicles/advanced_search.html')
 
@@ -74,14 +76,14 @@ def search(request):
     # search_vector = SearchVector('keyword_list', weight='A') + SearchVector(
     #     'article_title', weight='B') + SearchVector('article_abstract', weight='B')
     search_vector = SearchVector('keyword_list', weight='A') + SearchVector(
-         'article_title', weight='B')
+        'article_title', weight='B')
     search_term_updated = SearchQuery(search_term, search_type='websearch')
     articles = Article.objects.annotate(distance=TrigramDistance(
         'keyword_list', search_term_updated)).filter(distance__lte=0.3).order_by('distance')
     # articles = Article.objects.annotate(search=SearchVector(
     #     'keyword_list', 'article_title', 'article_abstract'),).filter(search=SearchQuery(search_term))
     articles = Article.objects.annotate(search=SearchVector(
-        'keyword_list', 'article_title'),).filter(search=SearchQuery(search_term))
+        'keyword_list', 'article_title'), ).filter(search=SearchQuery(search_term))
     articles = Article.objects.annotate(rank=SearchRank(
         search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4).order_by('-rank')
     print("mainsearch")
@@ -113,7 +115,18 @@ def detail(request, article_id):
     alert_flag = add_tag(request, article_id)
     print(alert_flag)
 
-    return render(request, 'medicles/detail.html', {'article': article, 'alert_flag': alert_flag})
+    alreadyFavourited = bool
+    if Article.objects.filter(favourite=request.user.id).exists():
+        alreadyFavourited = True
+
+    if Article.favourite.filter(id=request.user.id).exists():
+        Article.favourite.remove(request.user)
+
+    else:
+        Article.favourite.add(request.user)
+
+    return render(request, 'medicles/detail.html',
+                  {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
 
 
 @login_required
@@ -138,7 +151,7 @@ def add_tag(request, article_id):
             if tag_key and user_def_tag_key:
                 try:
                     tag_value = 'http://www.wikidata.org/wiki/' + \
-                        tag_request_from_browser[2]
+                                tag_request_from_browser[2]
                     # tag = Tag(tag_key = form.cleaned_data['tag_key'],
                     #         tag_value = form.cleaned_data['tag_value']
                     #         )
@@ -156,7 +169,7 @@ def add_tag(request, article_id):
             elif not user_def_tag_key:
                 try:
                     tag_value = 'http://www.wikidata.org/wiki/' + \
-                        tag_request_from_browser[2]
+                                tag_request_from_browser[2]
                     # tag = Tag(tag_key = form.cleaned_data['tag_key'],
                     #         tag_value = form.cleaned_data['tag_value']
                     #         )
@@ -214,7 +227,7 @@ def signup(request):
             form.save()
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password1')
-            #print(username, password)
+            # print(username, password)
             user = authenticate(username=username, password=password)
             login(request, user)
             return redirect('medicles:index')
@@ -244,3 +257,22 @@ def user_search_results(request):
     users = User.objects.annotate(rank=SearchRank(search_vector, search_term_updated, cover_density=True)).filter(
         rank__gte=0.4).order_by('-rank')
     return render(request, 'medicles/user_search_results.html', {'users': users})
+
+
+# @login_required
+def follow_article(request, article_id):
+    article = get_object_or_404(Article, pk=article_id)
+    if Article.favourite.filter(id=request.user.id).exists():
+        Article.favourite.remove(request.user)
+
+    else:
+        Article.favourite.add(request.user)
+
+    #return HttpResponseRedirect(request.META['HTTP_REFERER'])
+    #return HttpResponseRedirect(request.path_info)
+    return render(request, 'medicles/detail.html')
+
+@login_required
+def favourite_articles_list(request):
+    favourite_articles = Article.objects.filter(favourite=request.user)
+    return render(request, 'medicles/favourites.html', {'favourite_articles': favourite_articles})

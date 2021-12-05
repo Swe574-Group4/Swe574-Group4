@@ -22,7 +22,7 @@ class Article(models.Model):
     keyword_list = models.TextField(blank=True, null=True)
     search_vector = SearchVectorField(null=True, )
     #tags = models.TextField(blank=True, null=True)
-    favorite = models.ManyToManyField(User,related_name='favorite', default=None, blank=True)
+    favourite = models.ManyToManyField(User,related_name='favourite', default=None, blank=True)
 
     #objects = ArticleManager()
 
