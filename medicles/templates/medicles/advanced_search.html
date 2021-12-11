@@ -6,19 +6,29 @@
 
 <form class="example2" action="{% url 'medicles:advanced_search' %}"
     style="text-align:left;margin: 10px;max-width:500px;" method="get">
-    <label for="term" id="text">Search: </label>
+    <label for="term" id="text">Search: </label> &nbsp; &nbsp;
     <input type="text" placeholder="Search.." name="term" class="w3-white w3-button w3-round-xlarge">
-    <label for="term">Author: </label>
+    <br><br>
+    <label for="term">Author: </label> &nbsp; &nbsp;
     <input type="text" placeholder="Search.." name="author" class="w3-white w3-button w3-round-xlarge">
+    <br><br>
+    <label for="term">Date: </label> &nbsp; &nbsp; &nbsp; &nbsp;
+    <input type="date" name="start-date" style="width:195px;border-radius: 12px;">
+    <input type="date" name="end-date" style="width:195px;border-radius: 12px;">
     <br>
-    <label for="term">Date: </label>
-    <input type="date" name="start-date" class="w3-round-xxlarge">
-    <input type="date" name="end-date" class="w3-round-xxlarge">
     <br>
+    <input type="radio" id="desc" name="radio" value="desc" checked>
+    <label for="desc">Descending Date Order</label>&nbsp;&nbsp;
+    <input type="radio" id="asc" name="radio" value="asc">
+    <label for="asc">Ascending Date Order</label>&nbsp;&nbsp;
+    <input type="radio" id="rank" name="radio" value="rank">
+    <label for="rank">Sort by Rank</label>
+    <br><br>
     <label for="term">Keywords: </label>
     <input type="text" placeholder="Search.." name="keywords" class="w3-white w3-button w3-round-xlarge">
+    <br><br>
     <button type="submit" class="w3-round-xlarge"><i class="fa fa-search"></i></button>
-    <br>
+    <br><br>
     <h4>{{failure}}</a></h4>
 
 </form>
