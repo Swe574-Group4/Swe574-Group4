@@ -118,7 +118,14 @@ def get_articles_with_details(term, retmax, retmax_iter):
                     year = str(date2.find('Year').text)
                     month = str(date2.find('Month').text)
                     day = str(date2.find("Day").text)
-                    pubdate = year + "/" + month + "/" + day # + " 00:00"
+                    if day.count('') <=2 and month.count('') <=2 :
+                            pubdate = year + "/0" + month + "/0" + day
+                    elif day.count('') <=2 and month.count('') >2 :
+                        pubdate = year + "/" + month + "/0" + day
+                    elif day.count('') >2 and month.count('') <=2 :
+                        pubdate = year + "/0" + month + "/" + day
+                    else:
+                        pubdate = year + "/" + month + "/" + day # + " 00:00"
                     #pubdate = datetime.datetime.strptime(pubdate, '%Y/%m/%d %H:%M')
                     #print("PubDate output:", pubdate, " -- year:", year, " month:", month, " day:", day)
             except Exception as e:
