@@ -6,7 +6,7 @@ from django.core import paginator
 from django.http.response import Http404
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from medicles.models import Article, Tag
+from medicles.models import Article, Tag, FavouriteListTable
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
 from django.contrib.auth.decorators import login_required
@@ -109,22 +109,20 @@ def add_tag(request, article_id):
 
 
 def detail(request, article_id):
-    article = Article.objects.get(pk=article_id)
+    #article = Article.objects.get(pk=article_id)
     article = get_object_or_404(Article, pk=article_id)
 
-    alert_flag = add_tag(request, article_id)
-    print(alert_flag)
+    # alert_flag = add_tag(request, article_id)
+    alert_flag = False
+    # print(alert_flag)
+    follow_article(request, article_id)
 
-    alreadyFavourited = bool
-    if Article.objects.filter(favourite=request.user.id).exists():
+    alreadyFavourited = False
+    # if Article.objects.filter(favourite=request.user.id).exists():
+    #     alreadyFavourited = True
+    # if article.favourite.filter(id=request.user.id).exists():
+    if FavouriteListTable.objects.filter(user=request.user.id).exists():
         alreadyFavourited = True
-
-    if Article.favourite.filter(id=request.user.id).exists():
-        Article.favourite.remove(request.user)
-
-    else:
-        Article.favourite.add(request.user)
-
     return render(request, 'medicles/detail.html',
                   {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
 
@@ -260,17 +258,44 @@ def user_search_results(request):
 
 
 # @login_required
+# def follow_article(request, article_id):
+#     article = get_object_or_404(Article, pk=article_id)
+#
+#     # Gets the article that will be associated
+#     article_will_be_updated = Article.objects.get(pk=article_id)
+#     # Gets the user that will be associated
+#     user_will_be_updated = User.objects.get(pk=request.user.id)
+#
+#     print("user:",request.user.id)
+#     print("pmıd:",article_id)
+#     if article.favourite.filter(id=request.user.id).exists():
+#         article.favourite.remove(request.user)
+#
+#     else:
+#         article.favourite.add(request.user)
+#
+#     return HttpResponseRedirect(request.META['HTTP_REFERER'])
+# return HttpResponseRedirect(request.path_info)
+# return "stringX"
 def follow_article(request, article_id):
-    article = get_object_or_404(Article, pk=article_id)
-    if Article.favourite.filter(id=request.user.id).exists():
-        Article.favourite.remove(request.user)
+    # Gets the article that will be associated
+    article = Article.objects.get(pk=article_id)
+
+    # Gets the user that will be associated
+    user_will_be_updated = User.objects.get(pk=request.user.id)
+
+    #Article.objects.filter(favouritelisttable__user=user_will_be_updated).exists():
+    if article.favourite.filter(id=request.user.id).exists():
+        article.favourite.remove(user_will_be_updated)
 
     else:
-        Article.favourite.add(request.user)
+        favourite = FavouriteListTable()
+        favourite.save()
+        favourite.article.add(article)
+        favourite.user.add(user_will_be_updated)
 
-    #return HttpResponseRedirect(request.META['HTTP_REFERER'])
-    #return HttpResponseRedirect(request.path_info)
-    return render(request, 'medicles/detail.html')
+    return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
 
 @login_required
 def favourite_articles_list(request):
