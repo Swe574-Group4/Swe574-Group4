@@ -1,20 +1,17 @@
+import datetime
+
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.forms import UsernameField
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramDistance
-from medicles.forms import TagForm
-from django.core import paginator
-from django.http.response import Http404
+from django.db import IntegrityError
 from django.shortcuts import redirect, render, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from medicles.models import Article, Contact, Tag
+
+from medicles.forms import AnnotationForm
+from medicles.models import Article, Tag, Annotation
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.db import IntegrityError
-from django.contrib.postgres.aggregates import StringAgg
-import datetime
+
 
 # Create your views here.
 
@@ -53,23 +50,41 @@ def advanced_search(request):
             end_date = datetime.datetime.now()
         if Article.objects.filter(pub_date__range=(start_date, end_date)).exists():
             search_vector = SearchVector('keyword_list', weight='A') + SearchVector(
-        'article_title', weight='B') + SearchVector('article_abstract', weight='B')      
+                'article_title', weight='B') + SearchVector('article_abstract', weight='B')
             search_term_updated = SearchQuery(search_term, search_type='websearch')
             articles = Article.objects.annotate(distance=TrigramDistance(
-        'keyword_list', search_term_updated)).filter(distance__lte=0.3).order_by('distance')
+                'keyword_list', search_term_updated)).filter(distance__lte=0.3).order_by('distance')
             articles = Article.objects.annotate(search=SearchVector(
-        'keyword_list', 'article_title', 'article_abstract'),).filter(search=SearchQuery(search_term))
-            if radio=="asc":       
+                'keyword_list', 'article_title', 'article_abstract'), ).filter(search=SearchQuery(search_term))
+            if radio == "asc":
                 articles = Article.objects.annotate(rank=SearchRank(
-                search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4,article_title__icontains=search_term, author_list__icontains=author, pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).values().order_by('pub_date')
+                    search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4,
+                                                                                    article_title__icontains=search_term,
+                                                                                    author_list__icontains=author,
+                                                                                    pub_date__range=(
+                                                                                        start_date, end_date),
+                                                                                    keyword_list__icontains=keyword).values().order_by(
+                    'pub_date')
                 return render(request, 'medicles/search_results.html', {'articles': articles})
-            if radio=="desc":
+            if radio == "desc":
                 articles = Article.objects.annotate(rank=SearchRank(
-                search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4,article_title__icontains=search_term, author_list__icontains=author, pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).values().order_by('-pub_date')        
+                    search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4,
+                                                                                    article_title__icontains=search_term,
+                                                                                    author_list__icontains=author,
+                                                                                    pub_date__range=(
+                                                                                        start_date, end_date),
+                                                                                    keyword_list__icontains=keyword).values().order_by(
+                    '-pub_date')
                 return render(request, 'medicles/search_results.html', {'articles': articles})
             else:
                 articles = Article.objects.annotate(rank=SearchRank(
-                search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4,article_title__icontains=search_term, author_list__icontains=author, pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).values().order_by('-rank')        
+                    search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4,
+                                                                                    article_title__icontains=search_term,
+                                                                                    author_list__icontains=author,
+                                                                                    pub_date__range=(
+                                                                                        start_date, end_date),
+                                                                                    keyword_list__icontains=keyword).values().order_by(
+                    '-rank')
                 return render(request, 'medicles/search_results.html', {'articles': articles})
         else:
             failure = "There is no articles between these dates. Please consider changing the Date Field."
@@ -88,38 +103,22 @@ def search(request):
     articles = Article.objects.annotate(distance=TrigramDistance(
         'keyword_list', search_term_updated)).filter(distance__lte=0.3).order_by('distance')
     articles = Article.objects.annotate(search=SearchVector(
-        'keyword_list', 'article_title', 'article_abstract'),).filter(search=SearchQuery(search_term))
+        'keyword_list', 'article_title', 'article_abstract'), ).filter(search=SearchQuery(search_term))
     articles = Article.objects.annotate(rank=SearchRank(
         search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4).order_by('-rank')
     print("mainsearch")
     return render(request, 'medicles/search_results.html', {'articles': articles})
 
 
-''' Working tag form. Simple, just adds one field to Article model.
-def add_tag(request, article_id):
-    if request.method =='POST':
-        form = TagForm(request.POST)
-        if form.is_valid():
-            article_will_be_updated = Article.objects.get(pk=article_id)
-            article_will_be_updated.tags = form.cleaned_data['tag_key'] + ":" + form.cleaned_data['tag_value']
-            article_will_be_updated.save()
-            print(form.cleaned_data['tag_key'], form.cleaned_data['tag_value'])
-            return HttpResponseRedirect('/thanks')
-
-    else:
-        form = TagForm()
-
-    return render(request, 'medicles/tag_create.html', {'form': form, 'article_id': article_id})
-'''
-
-
 def detail(request, article_id):
     article = Article.objects.get(pk=article_id)
     article = get_object_or_404(Article, pk=article_id)
 
-    alert_flag = add_tag(request, article_id)
-    print(alert_flag)
-
+    check = str(request.body).find("annotation_key")
+    if check != -1:
+        alert_flag = add_annotation(request, article_id)
+    else:
+        alert_flag = add_tag(request, article_id)
     return render(request, 'medicles/detail.html', {'article': article, 'alert_flag': alert_flag})
 
 
@@ -134,7 +133,8 @@ def add_tag(request, article_id):
             article_will_be_updated = Article.objects.get(
                 pk=article_id)  # Gets the article that will be associated
             # Gets the user that will be associated
-            user_will_be_updated = User.objects.get(pk=request.user.id)
+            article_will_be_updated = Article.objects.get(pk=article_id)  # Gets the article that will be associated
+            user_will_be_updated = User.objects.get(pk=request.user.id)  # Gets the user that will be associated
             print(request.user.id)
             tag_request_from_browser = form.cleaned_data['tag_key'].split(':')
             print(tag_request_from_browser)
@@ -145,7 +145,7 @@ def add_tag(request, article_id):
             if tag_key and user_def_tag_key:
                 try:
                     tag_value = 'http://www.wikidata.org/wiki/' + \
-                        tag_request_from_browser[2]
+                                tag_request_from_browser[2]
                     # tag = Tag(tag_key = form.cleaned_data['tag_key'],
                     #         tag_value = form.cleaned_data['tag_value']
                     #         )
@@ -163,7 +163,7 @@ def add_tag(request, article_id):
             elif not user_def_tag_key:
                 try:
                     tag_value = 'http://www.wikidata.org/wiki/' + \
-                        tag_request_from_browser[2]
+                                tag_request_from_browser[2]
                     # tag = Tag(tag_key = form.cleaned_data['tag_key'],
                     #         tag_value = form.cleaned_data['tag_value']
                     #         )
@@ -200,7 +200,48 @@ def add_tag(request, article_id):
         form = TagForm()
 
     return alert_flag
-    # return render(request, 'medicles/tag_create.html', {'form': form, 'article_id': article_id})
+
+
+@login_required
+def add_annotation(request, article_id):
+    alert_flag = False
+    if request.method == 'POST':
+        form = AnnotationForm(request.POST)
+
+        annotation_request_from_browser = ''
+        if form.is_valid():
+            article_will_be_updated = Article.objects.get(pk=article_id)  # Gets the article that will be associated
+            user_will_be_updated = User.objects.get(pk=request.user.id)  # Gets the user that will be associated
+            print(request.user.id)
+            annotation_request_from_browser = form.cleaned_data['annotation_key'].split(':')
+            print(annotation_request_from_browser)
+            annotation_key = annotation_request_from_browser[0]
+            user_def_annotation_key = form.cleaned_data['user_def_annotation_key']
+
+            # If Wikidata tag_key and user defined user_def_tag_key exists. It will create user_def_tag_key.
+            if annotation_key and user_def_annotation_key:
+                try:
+                    # tag_value = 'http://www.wikidata.org/wiki/' + annotation_request_from_browser[2]
+                    # tag = Tag(tag_key = form.cleaned_data['tag_key'],
+                    #         tag_value = form.cleaned_data['tag_value']
+                    #         )
+                    annotation = Annotation(annotation_key=user_def_annotation_key,
+                                            annotation_value=annotation_key
+                                            )
+                    annotation.save()
+                    annotation.article.add(article_will_be_updated)
+                    annotation.user.add(user_will_be_updated)
+                except IntegrityError:
+                    alert_flag = True
+                    # return HttpResponseRedirect('medicles:index')
+
+            else:
+                pass
+
+    else:
+        form = AnnotationForm()
+
+    return alert_flag
 
 
 def ajax_load_tag(request):
@@ -221,7 +262,7 @@ def signup(request):
             form.save()
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password1')
-            #print(username, password)
+            # print(username, password)
             user = authenticate(username=username, password=password)
             login(request, user)
             return redirect('medicles:index')
@@ -252,33 +293,34 @@ def user_search_results(request):
         rank__gte=0.4).order_by('-rank')
     return render(request, 'medicles/user_search_results.html', {'users': users})
 
+
 from actions.utils import create_action, delete_action
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .models import Contact
-from actions.models import Action
 from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 
+
 def ajax_required(f):
-   """
-   AJAX request required decorator
-   use it in your views:
+    """
+    AJAX request required decorator
+    use it in your views:
 
-   @ajax_required
-   def my_view(request):
-       ....
+    @ajax_required
+    def my_view(request):
+        ....
 
-   """   
+    """
 
-   def wrap(request, *args, **kwargs):
-       if not request.is_ajax():
-           return HttpResponseBadRequest()
-       return f(request, *args, **kwargs)
+    def wrap(request, *args, **kwargs):
+        if not request.is_ajax():
+            return HttpResponseBadRequest()
+        return f(request, *args, **kwargs)
 
-   wrap.__doc__=f.__doc__
-   wrap.__name__=f.__name__
-   return wrap
+    wrap.__doc__ = f.__doc__
+    wrap.__name__ = f.__name__
+    return wrap
+
 
 @csrf_exempt
 @ajax_required
@@ -300,8 +342,4 @@ def user_follow(request):
             return JsonResponse({'status': 'ok'})
         except User.DoesNotExist:
             return JsonResponse({'status': 'error'})
-    return JsonResponse({'status': 'error'}) 
-
-
-    
-    
+    return JsonResponse({'status': 'error'})
