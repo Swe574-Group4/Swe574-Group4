@@ -107,27 +107,39 @@
             display: table;
         }
 
+        .float-container {
+            border: 3px solid #fff;
+            padding: 20px;
+        }
+
+        .float-child {
+            width: 50%;
+            float: left;
+            padding: 20px;
+            border: 1px solid black;
+        }
+
     </style>
 </head>
 <body>
 
 <div class="topnav" id="myTopnav">
-  <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
-  <a href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-search"></i> Search</a>
-  {% if user.is_authenticated %}
-      <a href="{% url 'medicles:user_search' %}">User Search</a>
-    <a>
-          Hi {{ user.username }}!
-          <a href="{% url 'medicles:logout' %}">Log Out</a>
-  {% else %}
-          <a href="{% url 'medicles:login' %}"><i class="fa fa-fw fa-user "></i> Login</a>
-           <a href="{% url 'medicles:signup' %}"><i class="fa fa-fw fa-address-book"></i> Signup</a>
+    <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
+    <a href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-search"></i> Search</a>
+    {% if user.is_authenticated %}
+        <a href="{% url 'medicles:user_search' %}">User Search</a>
+        <a>
+            Hi {{ user.username }}!
+            <a href="{% url 'medicles:logout' %}">Log Out</a>
+            {% else %}
+            <a href="{% url 'medicles:login' %}"><i class="fa fa-fw fa-user "></i> Login</a>
+            <a href="{% url 'medicles:signup' %}"><i class="fa fa-fw fa-address-book"></i> Signup</a>
+        </a>
+    {% endif %}
+
+    <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+        <i class="fa fa-bars"></i>
     </a>
-  {% endif %}
- 
-  <a href="javascript:void(0);" class="icon" onclick="myFunction()">
-    <i class="fa fa-bars"></i>
-  </a>
 </div>
 
 <div class="w3-margin">
@@ -147,44 +159,88 @@
                          class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }} </a></span>
             {% endfor %}
         </p>
+        <p><strong>Annotations:</strong>
+            {% for tag_obj in article.annotation_set.all %}
+                <span><a href="{{ tag_obj.annotation_value }}"
+                         class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">
+                    {{ tag_obj.annotation_key }}-{{ tag_obj.annotation_value }}</a></span>
+            {% endfor %}
+        </p>
     </div>
 </div>
 
 
 {% if user.is_authenticated %}
-    <div class="w3-container w3-container-teal  w3-margin-left">
-        <h4  id="tagHeader" title="Tag me" class="w3-text-teal w3-left w3-text-opacity">Tag the article either using Wikidata
-            tags or using your own tags</h4>
-    </div>
-    <form action="{% url 'medicles:detail' article.article_id %}" method="post" class="w3-container">
-        {% csrf_token %}
-        <div class="w3-margin-left w3-padding-24">
+    <div class="float-container">
 
-            <label for="user_def_tag_key"><b></b></label>
-            <input type="text" placeholder="Enter tag name or leave it empty for Wikidata tags.."
-                   name="user_def_tag_key" id="id_user_def_tag_key"
-                   class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                   style="width:60%">
+        <div class="float-child" id="tag-division">
+            <div class="w3-container w3-container-teal  w3-margin-left">
+                <h4 id="tagHeader" title="Tag me" class="w3-text-teal w3-left w3-text-opacity">Tag the article either
+                    using Wikidata
+                    tags or using your own tags</h4>
+            </div>
+            <form action="{% url 'medicles:detail' article.article_id %}" method="post" class="w3-container">
+                {% csrf_token %}
+                <div class="w3-margin-left w3-padding-24">
 
-            <br><br>
-            <label for="tag_key"><b></b></label>
-            <input type="text" placeholder="Search tag from Wikidata.." name="tag_key" id="id_tag_key"
-                   class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                   style="width:60%">
+                    <label for="user_def_tag_key"><b></b></label>
+                    <input type="text" placeholder="Enter tag name or leave it empty for Wikidata tags.."
+                           name="user_def_tag_key" id="id_user_def_tag_key"
+                           class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
+                           style="width:60%">
+
+                    <br><br>
+                    <label for="tag_key"><b></b></label>
+                    <input type="text" placeholder="Search tag from Wikidata.." name="tag_key" id="id_tag_key"
+                           class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
+                           style="width:60%">
+                    <br><br>
+                    <input type="submit" value="Add Tag" id="tagBT" class="w3-teal w3-button w3-round-xxlarge"
+                           style="width:22%">
+                    <br><br>
 
 
-            <input type="submit" value="Add" class="w3-teal w3-button w3-round-xxlarge" style="width:10%">
-            <br><br>
-            <label for="user_def_tag_key"><b></b></label>
-            <input type="text" placeholder="Annotation"
-                   disabled
-                   name="user_def_tag_key" id="annotationField"
-                   class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                   style="width:60%">
-
-            <br><br><br><br><br><br><br><br><br><br>
+                    <br><br><br><br><br><br><br><br><br><br>
+                </div>
+            </form>
         </div>
-    </form>
+
+        <div class="float-child" id="annotate-division">
+            <div class="w3-container w3-container-teal  w3-margin-left">
+                <h4 id="tagHeader" title="Tag me" class="w3-text-teal w3-left w3-text-opacity">
+                    Annotate the highlighted section </h4>
+            </div>
+            <form action="{% url 'medicles:detail' article.article_id %}" method="post" class="w3-container">
+                {% csrf_token %}
+                <div class="w3-margin-left w3-padding-24">
+
+                    <input type="text" placeholder="Text to be annotated"
+                           name="user_def_annotation_key" id="textToBeAnnotated"
+                           class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
+                           style="width:40%">
+
+                    <a href="javascript:void(0);" class="icon" onclick="cancelAnnotation()">
+                        Cancel Annotation
+                    </a>
+
+                    <br><br>
+                    <label for="annotation_key"><b></b></label>
+                    <input type="text" placeholder="Annotation"
+                           disabled
+                           name="annotation_key" id="annotationField"
+                           class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
+                           style="width:60%">
+                    <br><br>
+                    <input type="submit" value="Add Annotation" id="annotationBT"
+                           class="w3-teal w3-button w3-round-xxlarge" style="width:22%">
+
+
+                    <br><br><br><br><br><br><br><br><br><br>
+                </div>
+            </form>
+        </div>
+
+    </div>
 {% else %}
     <div class="w3-container w3-container-teal  w3-margin-left">
         <h4 title="Tag me" class="w3-text-teal w3-left w3-text-opacity">Please <a href="{% url 'medicles:login' %}">login</a>
@@ -195,24 +251,46 @@
 
 <script type="text/javascript">
 
-document.getElementById('annotationField').style.height="200px";
+    document.getElementById('annotationField').style.height = "80px";
 
-var t = '';
-function gText(e) {
-    t = (document.all) ? document.selection.createRange().text : document.getSelection();
-    if(t.toString().length !== 0){
-     document.getElementById("annotationField").disabled = false;
-     document.getElementById("tagHeader").textContent = "Tag the highlighted section either using Wikidata tags or using your own tags"
-    } else {
-        document.getElementById("annotationField").disabled = true;
-        document.getElementById("tagHeader").textContent = "Tag the article either using Wikidata tags or using your own tags"
+    var t = '';
+
+    function gText(e) {
+        t = (document.all) ? document.selection.createRange().text : document.getSelection();
+        if (t.toString().length !== 0) {
+            document.getElementById("textToBeAnnotated").value = t
+            document.getElementById("annotationField").disabled = false;
+            document.getElementById("id_tag_key").disabled = true
+            document.getElementById("id_user_def_tag_key").disabled = true
+            document.getElementById("tagBT").disabled = true
+        }
     }
-}
-document.onmouseup = gText;
 
-if (!document.all) {
-    document.captureEvents(Event.MOUSEUP);
-}
+    document.onmouseup = gText;
+
+    if (!document.all) {
+        document.captureEvents(Event.MOUSEUP);
+    }
+
+    function cancelAnnotation() {
+
+        if (window.getSelection) {
+            if (window.getSelection().empty) {  // Chrome
+                window.getSelection().empty();
+            } else if (window.getSelection().removeAllRanges) {  // Firefox
+                window.getSelection().removeAllRanges();
+            }
+        } else if (document.selection) {  // IE?
+            document.selection.empty();
+        }
+
+        document.getElementById("annotationField").value = ""
+        document.getElementById("textToBeAnnotated").value = ""
+        document.getElementById("annotationField").disabled = true
+        document.getElementById("id_tag_key").disabled = false
+        document.getElementById("id_user_def_tag_key").disabled = false
+        document.getElementById("tagBT").disabled = false
+    }
 
     jQuery(function () {
         $("#id_tag_key").on('keyup', function () {
