@@ -5,6 +5,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="https://medicles.blob.core.windows.net/static/userSearchResult.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.js"></script>
     <style>
         body {
             margin: 0;
@@ -129,32 +133,61 @@
 
 <div class="w3-container w3-margin-right w3-margin-left">
     <h2 class="w3-container center" >User Search Results</h2>
-    <h4 class="w3-container w3-text-blue-grey center"><strong>{{ users.count }} user found</strong></h4>
+    <h4 class="w3-container w3-text-blue-grey center"><strong>{{ users.count }} users found</strong></h4>
 
 
 
     {% for user in users %}
-        <div class="userList">
+        <div class="w3-container w3-margin-right w3-margin-left">
 
-            <h1 class="w3-text-teal" id="userName"><a href="{% url 'medicles:profile' user.id%}">{{ user.username }}</a></h1>
-
-        <label style="margin: auto">
-            <p><strong>Tags:</strong>
+            
+            <h3 style="display:inline" class="w3-text-teal " id="userName"><a href="{% url 'medicles:profile' user.id%}">{{ user.first_name }} {{ user.last_name }}</a></h3>
+           
+            <button style="float:right;" id="{{ user.id }}" data-id="{{ user.id }}" data-action="{% if request.user in user.actions.all %}un{% endif %}follow" class="w3-button w3-round-xlarge w3-teal w3-padding-medium">
+                {% if request.user not in user.actions.all %}
+                    Follow
+                {% else %}
+                    Unfollow
+                {% endif %}
+            </button>
+           <br>
+           <p class="w3-margin-left">
+            <strong>Tags:</strong>
                 {% for tag_obj in user.tag_set.all %}
                     <span><a href="{{ tag_obj.tag_value }}"
                              class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }} </a></span>
                 {% endfor %}
             </p>
-        </label>
-            <hr>
-
-<label style="padding-left: 410px">
-            <button type="submit" class="registerbtn">Follow</button>
-</label>
-
         </div>
-    {% endfor %}
+        <hr>
+        {% endfor %}
+    </div>
+  
 
 
-</div>
+<script type="text/javascript">
+    $(this).click(function(e){
+        var target = (event.target.id);
+        //alert(target);
+        
+        e.preventDefault();
+        $.post('{% url "medicles:user_follow" %}',
+            {
+                id: $('#'+target).data('id'),
+                action: $('#'+target).data('action')
+            },
+            function(data){
+                if (data['status'] == 'ok')
+                {
+                    var previous_action = $('#'+target).data('action');
+
+                    // toggle data-action
+                    $('#'+target).data('action', previous_action == 'follow' ? 'unfollow' : 'follow');
+                    // toggle link text
+                    $('#'+target).text(previous_action == 'follow' ? 'Unfollow' : 'Follow');
+}
+        });
+    });
+
+</script>
 

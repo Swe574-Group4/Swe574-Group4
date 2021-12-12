@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.expressions import OrderBy
 from django.db.models.fields.related import ManyToManyField
 from medicles.managers import ArticleManager
 
@@ -37,9 +38,26 @@ class Article(models.Model):
         )
 
 
+
 class Tag(models.Model):
     article = ManyToManyField(Article)
     user = ManyToManyField(User)
     tag_key = models.CharField(
         unique=True, blank=True, null=True, max_length=100)
     tag_value = models.CharField(blank=True, null=True, max_length=100)
+
+class Contact(models.Model):
+    user_from = models.ForeignKey('auth.User',
+                                    related_name='rel_from_set',
+                                    on_delete=models.CASCADE)
+    user_to = models.ForeignKey('auth.User',
+                                related_name='rel_to_set',
+                                on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True,
+                                    db_index=True)
+
+    class Meta:
+        ordering = ('-created',)
+    
+    def __str__(self) -> str:
+        return f'{self.user_from} follow {self.user_to}'

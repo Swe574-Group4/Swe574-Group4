@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import UsernameField
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramDistance
 from medicles.forms import TagForm
@@ -6,7 +7,7 @@ from django.core import paginator
 from django.http.response import Http404
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from medicles.models import Article, Tag
+from medicles.models import Article, Contact, Tag
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
 from django.contrib.auth.decorators import login_required
@@ -240,3 +241,57 @@ def user_search_results(request):
     users = User.objects.annotate(rank=SearchRank(search_vector, search_term_updated, cover_density=True)).filter(
         rank__gte=0.4).order_by('-rank')
     return render(request, 'medicles/user_search_results.html', {'users': users})
+
+from actions.utils import create_action, delete_action
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .models import Contact
+from actions.models import Action
+from django.http import HttpResponseBadRequest
+from django.views.decorators.csrf import csrf_exempt
+
+def ajax_required(f):
+   """
+   AJAX request required decorator
+   use it in your views:
+
+   @ajax_required
+   def my_view(request):
+       ....
+
+   """   
+
+   def wrap(request, *args, **kwargs):
+       if not request.is_ajax():
+           return HttpResponseBadRequest()
+       return f(request, *args, **kwargs)
+
+   wrap.__doc__=f.__doc__
+   wrap.__name__=f.__name__
+   return wrap
+
+@csrf_exempt
+@ajax_required
+@require_POST
+@login_required
+def user_follow(request):
+    print("Request.user: ", request.user, " User: ")
+    user_id = request.POST.get('id')
+    action = request.POST.get('action')
+    print("User_id:", user_id)
+    print("Action", action)
+    if user_id and action:
+        try:
+            user = User.objects.get(id=user_id)
+            if action == 'follow':
+                create_action(request.user, 'is following', user)
+            else:
+                delete_action(request.user, 'is following', user)
+            return JsonResponse({'status': 'ok'})
+        except User.DoesNotExist:
+            return JsonResponse({'status': 'error'})
+    return JsonResponse({'status': 'error'}) 
+
+
+    
+    
