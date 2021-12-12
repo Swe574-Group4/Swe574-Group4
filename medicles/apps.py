@@ -1,15 +1,11 @@
-from django.apps import AppConfig
+from django.apps import AppConfig, apps
+
 
 
 class MediclesConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'medicles'
 
-    # Activity stream implementation
-    def ready(self):
-        from actstream import registry
-        registry.register(self.get_model('Article'))
-    
     # def ready(self):
     #     from medicles import services
     #     srv = services

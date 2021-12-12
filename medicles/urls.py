@@ -35,9 +35,7 @@ urlpatterns = [
 
     path('usersearchresults/', views.user_search_results, name='user_search_results'),
 
-    #path('article/<int:article_id>/', views.follow_article, name='follow_article'),
-    path('favourites/<int:article_id>/', views.follow_article, name='follow_article'),
-
-    path('favourites/', views.favourite_articles_list, name='favourite_list'),
+    # User Follow Action
+    path('users/follow/', views.user_follow, name='user_follow'),
 
 ]
