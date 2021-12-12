@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import IntegrityError
 from django.contrib.postgres.aggregates import StringAgg
+import datetime
 
 # Create your views here.
 
@@ -41,28 +42,37 @@ def advanced_search(request):
     if request.GET.get("term") != None:
         search_term = request.GET.get('term', None)
         author = request.GET.get('author', None)
-        # print(request.GET.get('author'))
         start_date = request.GET.get('start-date')
-        print(request.GET.get)
-        print(start_date)
-        # print(request.GET.get('start_date'))
+        radio = request.GET.get('radio')
         end_date = request.GET.get('end-date')
         keyword = request.GET.get('keywords')
         if start_date == "":
             start_date = "1960-01-01"
         if end_date == "":
-            end_date = "2021-11-30"
-        print(end_date)
+            end_date = datetime.datetime.now()
         if Article.objects.filter(pub_date__range=(start_date, end_date)).exists():
-            articles = Article.objects.filter(
-                article_title__icontains=search_term, author_list__icontains=author, pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).values()
-            return render(request, 'medicles/search_results.html', {'articles': articles})
+            search_vector = SearchVector('keyword_list', weight='A') + SearchVector(
+        'article_title', weight='B') + SearchVector('article_abstract', weight='B')      
+            search_term_updated = SearchQuery(search_term, search_type='websearch')
+            articles = Article.objects.annotate(distance=TrigramDistance(
+        'keyword_list', search_term_updated)).filter(distance__lte=0.3).order_by('distance')
+            articles = Article.objects.annotate(search=SearchVector(
+        'keyword_list', 'article_title', 'article_abstract'),).filter(search=SearchQuery(search_term))
+            if radio=="asc":       
+                articles = Article.objects.annotate(rank=SearchRank(
+                search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4,article_title__icontains=search_term, author_list__icontains=author, pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).values().order_by('pub_date')
+                return render(request, 'medicles/search_results.html', {'articles': articles})
+            if radio=="desc":
+                articles = Article.objects.annotate(rank=SearchRank(
+                search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4,article_title__icontains=search_term, author_list__icontains=author, pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).values().order_by('-pub_date')        
+                return render(request, 'medicles/search_results.html', {'articles': articles})
+            else:
+                articles = Article.objects.annotate(rank=SearchRank(
+                search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4,article_title__icontains=search_term, author_list__icontains=author, pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).values().order_by('-rank')        
+                return render(request, 'medicles/search_results.html', {'articles': articles})
         else:
             failure = "There is no articles between these dates. Please consider changing the Date Field."
             return render(request, 'medicles/advanced_search.html', {'failure': failure})
-
-        # if articles != 0:
-            # return render(request, 'medicles/search_results.html', {'articles': articles})
     else:
         return render(request, 'medicles/advanced_search.html')
 
