@@ -109,20 +109,31 @@ def add_tag(request, article_id):
 
 
 def detail(request, article_id):
-    #article = Article.objects.get(pk=article_id)
+    # article = Article.objects.get(pk=article_id)
     article = get_object_or_404(Article, pk=article_id)
 
     # alert_flag = add_tag(request, article_id)
     alert_flag = False
-    # print(alert_flag)
-    follow_article(request, article_id)
+
+    #print(FavouriteListTable.objects.filter(article=article).values_list('pk', flat=True)[0])
+
 
     alreadyFavourited = False
-    # if Article.objects.filter(favourite=request.user.id).exists():
-    #     alreadyFavourited = True
-    # if article.favourite.filter(id=request.user.id).exists():
-    if FavouriteListTable.objects.filter(user=request.user.id).exists():
-        alreadyFavourited = True
+    if FavouriteListTable.objects.filter(article=article).exists():
+        if FavouriteListTable.objects.filter(user=request.user.id).exists():
+            print("adsasdsad")
+            alreadyFavourited = True
+
+    if FavouriteListTable.objects.filter(article=article).exists():
+        if FavouriteListTable.objects.filter(user=request.user.id).exists():
+            print("idk man")
+    # user_updated = User.objects.get(pk=request.user.id)
+    # favourite = FavouriteListTable()
+    # favourite.save()
+    # favourite.article.add(article)
+    # favourite.user.add(user_updated)
+
+    print("fav:", alreadyFavourited)
     return render(request, 'medicles/detail.html',
                   {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
 
@@ -278,23 +289,38 @@ def user_search_results(request):
 # return HttpResponseRedirect(request.path_info)
 # return "stringX"
 def follow_article(request, article_id):
-    # Gets the article that will be associated
     article = Article.objects.get(pk=article_id)
 
-    # Gets the user that will be associated
-    user_will_be_updated = User.objects.get(pk=request.user.id)
+    user_updated = User.objects.get(pk=request.user.id)
 
-    #Article.objects.filter(favouritelisttable__user=user_will_be_updated).exists():
-    if article.favourite.filter(id=request.user.id).exists():
-        article.favourite.remove(user_will_be_updated)
+    if request.method == 'POST':
+        # form = TagForm(request.POST)
 
-    else:
-        favourite = FavouriteListTable()
-        favourite.save()
-        favourite.article.add(article)
-        favourite.user.add(user_will_be_updated)
+        # Article.objects.filter(favouritelisttable__user=user_will_be_updated).exists():
+        if FavouriteListTable.objects.filter(article=article).exists():
+            if FavouriteListTable.objects.filter(user=request.user.id).exists():
+
+
+                # FavouriteListTable.article.remove(article)
+                # FavouriteListTable.user.remove(user_updated)
+
+                # favourite = FavouriteListTable()
+                # favourite.article.remove(article)
+                # favourite.user.remove(user_updated)
+                #pk_value = FavouriteListTable.objects.filter(user=request.user.id).values_list('pk', flat=True)[0]
+                pk_value = FavouriteListTable.objects.filter(article=article).values_list('pk', flat=True)[0]
+                favourite = FavouriteListTable(pk=pk_value)
+                favourite.article.remove(article)
+                favourite.user.remove(user_updated)
+
+        else:
+            favourite = FavouriteListTable()
+            favourite.save()
+            favourite.article.add(article)
+            favourite.user.add(user_updated)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
+    # return
 
 
 @login_required

@@ -139,21 +139,16 @@
         <h3 class="w3-text-teal"><a href="{% url 'medicles:detail' article.article_id %}">{{ article.article_title }}
         </h3>
 
-        {% if  alreadyFavourited %}
-            <a href="{% url 'medicles:follow_article' article.article_id %}"
-               class="w3-container w3-container-teal  w3-margin-left">Remove from favorites
-            </a>
-        {% else %}
-            {#            <a href="{url 'medicles:follow_article' Article.article_id}"#}
-            {#               class="w3-container w3-container-teal  w3-margin-left">AddX to Favorites#}
-            {#            </a>#}
-
-            {#            <a href="{% url 'medicles:follow_article' article.article_id %}"#}
-            {#               class="btn btn-outline-primary">AddX to Favorites#}
-            {#            </a>#}
+        {% if  alreadyFavourited == True %}
             <form action="{% url 'medicles:follow_article' article.article_id %}" method="post" class="w3-container">
             {% csrf_token %}
-            <input type="submit" value="Add to Favorites" class="w3-teal w3-button w3-round-xxlarge" style="width:10%">
+            <input type="submit" value="Remove from Favorites" class="w3-teal w3-button w3-padding-large w3-round-xxlarge" style="width:15%">
+
+        {% else %}
+            <form action="{% url 'medicles:follow_article' article.article_id %}" method="post" class="w3-container">
+            {% csrf_token %}
+            <input type="submit" value="Add to Favorites" class="w3-teal w3-button w3-padding-large w3-round-xxlarge"
+                   style="width:15%">
 
         {% endif %}
         <!--        {% if user.is_authenticated %}-->
