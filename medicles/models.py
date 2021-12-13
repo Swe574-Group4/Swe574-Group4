@@ -68,3 +68,4 @@ class Annotation(models.Model):
     annotation_value = models.CharField(blank=True, null=True, max_length=100)
     startIndex = 0
     endIndex = 0
+    creationDate = ""

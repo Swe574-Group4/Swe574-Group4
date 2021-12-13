@@ -114,11 +114,17 @@ def detail(request, article_id):
     article = Article.objects.get(pk=article_id)
     article = get_object_or_404(Article, pk=article_id)
 
-    check = str(request.body).find("annotation_key")
-    if check != -1:
+    checkAnnotation = str(request.body).find("annotation_key")
+    checkTag = str(request.body).find("tag_key")
+    if checkAnnotation != -1:
         alert_flag = add_annotation(request, article_id)
-    else:
+
+    elif checkTag != -1:
         alert_flag = add_tag(request, article_id)
+
+    else:
+        alert_flag = False
+
     return render(request, 'medicles/detail.html', {'article': article, 'alert_flag': alert_flag})
 
 
@@ -200,6 +206,7 @@ def add_tag(request, article_id):
         form = TagForm()
 
     return alert_flag
+
 
 
 @login_required
