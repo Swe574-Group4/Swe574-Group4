@@ -33,7 +33,8 @@ def index(request):
 #     #print(context)
 
 
-#     return render(request, 'medicles/search_results.html', {'articles': articles}) # add context variable if you want to go back
+# return render(request, 'medicles/search_results.html', {'articles': articles}) # add context variable if you want
+# to go back
 
 
 def advanced_search(request):
