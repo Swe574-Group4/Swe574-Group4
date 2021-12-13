@@ -35,5 +35,7 @@ urlpatterns = [
 
     path('usersearchresults/', views.user_search_results, name='user_search_results'),
 
+    # User Follow Action
+    path('users/follow/', views.user_follow, name='user_follow'),
 
 ]
