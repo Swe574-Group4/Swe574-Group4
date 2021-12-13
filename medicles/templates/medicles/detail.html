@@ -169,9 +169,9 @@
     </div>
 </div>
 
-
 {% if user.is_authenticated %}
     <div class="float-container">
+
         <div class="float-child" id="tag-division">
             <div class="w3-container w3-container-teal  w3-margin-left">
                 <h4 id="tagHeader" title="Tag me" class="w3-text-teal w3-left w3-text-opacity">Tag the article either
@@ -203,85 +203,57 @@
                 </div>
             </form>
         </div>
-        <form action="{% url 'medicles:detail' article.article_id %}" method="post" class="w3-container">
-            {% csrf_token %}
-            <div class="w3-margin-left w3-padding-24">
 
-                <input type="text" placeholder="Text to be annotated"
-                       name="user_def_annotation_key" id="textToBeAnnotated"
-                       class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                       style="width:40%">
-
-                <a href="javascript:void(0);" class="icon" onclick="cancelAnnotation()">
-                    Cancel Annotation
-                </a>
-
-                <br><br>
-                <label for="annotation_key"><b></b></label>
-                <input type="text" placeholder="Annotation"
-                       disabled
-                       name="annotation_key" id="annotationField"
-                       class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                       style="width:60%">
-                <br><br>
-
-                <label for="annotation_indices"><b></b></label>
-                <input type="text"
-                       name="annotation_start_index" id="annotationStartIndex"
-                       class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                       style="width:60%">
-                <br><br>
-
-                <label for="annotation_indices"><b></b></label>
-                <input type="text"
-                       name="annotation_end_index" id="annotationEndIndex"
-                       class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                       style="width:60%">
-                <br><br>
-
-                <input type="submit" value="Add Annotation" id="annotationBT" class="w3-teal w3-button w3-round-xxlarge"
-                       style="width:22%">
-
-
-                <br><br><br><br><br><br><br><br><br><br>
+        <div class="float-child" id="annotate-division">
+            <div class="w3-container w3-container-teal  w3-margin-left">
+                <h4 id="tagHeader" title="Tag me" class="w3-text-teal w3-left w3-text-opacity">
+                    Annotate the highlighted section </h4>
             </div>
-        </form>
-    </div>
+            <form action="{% url 'medicles:detail' article.article_id %}" method="post" class="w3-container">
+                {% csrf_token %}
+                <div class="w3-margin-left w3-padding-24">
 
-    <div class="float-child" id="annotate-division">
-        <div class="w3-container w3-container-teal  w3-margin-left">
-            <h4 id="tagHeader" title="Tag me" class="w3-text-teal w3-left w3-text-opacity">
-                Annotate the highlighted section </h4>
+                    <input type="text" placeholder="Text to be annotated"
+                           name="user_def_annotation_key" id="textToBeAnnotated"
+                           class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
+                           style="width:40%">
+
+                    <a href="javascript:void(0);" class="icon" onclick="cancelAnnotation()">
+                        Cancel Annotation
+                    </a>
+
+                    <br><br>
+                    <label for="annotation_key"><b></b></label>
+                    <input type="text" placeholder="Annotation"
+                           disabled
+                           name="annotation_key" id="annotationField"
+                           class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
+                           style="width:60%">
+                    <br><br>
+
+
+                    <label for="annotation_indices"><b></b></label>
+                    <input type="text"
+                           name="annotation_start_index" id="annotationStartIndex"
+                           class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
+                           style="width:60%">
+                    <br><br>
+
+                    <label for="annotation_indices"><b></b></label>
+                    <input type="text"
+                           name="annotation_end_index" id="annotationEndIndex"
+                           class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
+                           style="width:60%">
+                    <br><br>
+
+                    <input type="submit" value="Add Annotation" id="annotationBT"
+                           class="w3-teal w3-button w3-round-xxlarge" style="width:22%">
+
+
+                    <br><br><br><br><br><br><br><br><br><br>
+                </div>
+            </form>
         </div>
-        <form action="{% url 'medicles:detail' article.article_id %}" method="post" class="w3-container">
-            {% csrf_token %}
-            <div class="w3-margin-left w3-padding-24">
-
-                <input type="text" placeholder="Text to be annotated"
-                       name="user_def_annotation_key" id="textToBeAnnotated"
-                       class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                       style="width:40%">
-
-                <a href="javascript:void(0);" class="icon" onclick="cancelAnnotation()">
-                    Cancel Annotation
-                </a>
-
-                <br><br>
-                <label for="annotation_key"><b></b></label>
-                <input type="text" placeholder="Annotation"
-                       disabled
-                       name="annotation_key" id="annotationField"
-                       class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                       style="width:60%">
-                <br><br>
-                <input type="submit" value="Add Annotation" id="annotationBT"
-                       class="w3-teal w3-button w3-round-xxlarge" style="width:22%">
-
-
-                <br><br><br><br><br><br><br><br><br><br>
-            </div>
-        </form>
-    </div>
 
     </div>
 {% else %}
