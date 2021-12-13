@@ -16,6 +16,16 @@ from django.db import IntegrityError
 from django.contrib.postgres.aggregates import StringAgg
 import datetime
 
+from actions.utils import create_action, delete_action
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .models import Contact
+from actions.models import Action
+from django.http import HttpResponseBadRequest
+from django.views.decorators.csrf import csrf_exempt
+import datetime
+from django.utils import timezone
+
 # Create your views here.
 
 
@@ -76,7 +86,7 @@ def advanced_search(request):
             return render(request, 'medicles/advanced_search.html', {'failure': failure})
     else:
         return render(request, 'medicles/advanced_search.html')
-
+from .models import Search
 
 def search(request):
     search_term = request.GET.get('q', None)
@@ -92,6 +102,13 @@ def search(request):
     articles = Article.objects.annotate(rank=SearchRank(
         search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4).order_by('-rank')
     print("mainsearch")
+    search_obj = Search(user=request.user.id, term=search_term)
+    search_obj.save()
+
+    now = timezone.now()
+    last_minute = now - datetime.timedelta(seconds=120)
+    target_search = Search.objects.get(user=request.user.id, term=search_term, created__gte=last_minute)
+    create_action(user=request.user, verb='searched', target=target_search)
     return render(request, 'medicles/search_results.html', {'articles': articles})
 
 
@@ -252,13 +269,30 @@ def user_search_results(request):
         rank__gte=0.4).order_by('-rank')
     return render(request, 'medicles/user_search_results.html', {'users': users})
 
-from actions.utils import create_action, delete_action
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from .models import Contact
-from actions.models import Action
-from django.http import HttpResponseBadRequest
-from django.views.decorators.csrf import csrf_exempt
+
+
+
+# User Activity View
+def user_activity(request):
+    user_from = request.user.id
+    all_actions = Action.objects.filter(user_id=user_from)
+    detailed_actions = []
+    for action in all_actions:
+        if action.verb == 'is following':
+            subject_user = User.objects.filter(id=user_from)
+            
+            print(subject_user.all)
+            target_user = User.objects.filter(id=action.target_id)
+            detailed_actions.append([subject_user[0], subject_user[0].first_name + ' ' + subject_user[0].last_name, action.verb, target_user[0].first_name + ' ' + target_user[0].last_name])
+        if action.verb == 'searched':
+            subject_user = User.objects.filter(id=user_from)
+            
+            print(subject_user.all)
+            target_term = Search.objects.filter(id=action.target_id)
+            detailed_actions.append([subject_user[0], subject_user[0].first_name + ' ' + subject_user[0].last_name, action.verb, target_term[0].term])
+    
+
+    return render(request, 'medicles/user_activity.html', {'detailed_actions': detailed_actions})
 
 def ajax_required(f):
    """

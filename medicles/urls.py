@@ -38,4 +38,7 @@ urlpatterns = [
     # User Follow Action
     path('users/follow/', views.user_follow, name='user_follow'),
 
+    # User Activity
+    path('useractivity/', views.user_activity, name='user_activity'),
+
 ]
