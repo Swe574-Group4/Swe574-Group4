@@ -371,6 +371,7 @@ def ajax_required(f):
     wrap.__name__ = f.__name__
     return wrap
 
+home_url = "http://medicles.com"
 
 @csrf_exempt
 @ajax_required
@@ -383,30 +384,37 @@ def user_follow(request):
     print("User_id:", user_id)
     print("Action", action)
 
-    home_url = "http://medicles.com"
-    now = datetime.datetime.now().isoformat()
+    # Target user object gets using below query
+    user = User.objects.get(id=user_id)
+    
+    published_date = get_published_date()
+    actor_profile_url = get_user_profile_url(request.user.id)
+    actor_fullname = get_user_fullname(request.user)
+
+    target_profile_url = get_user_profile_url(user.id)
+    target_fullname = get_user_fullname(user)
 
     if user_id and action:
         try:
-            user = User.objects.get(id=user_id)
-
+            # Moved below variable to outside of if-else condition
+            # user = User.objects.get(id=user_id)
             # Activity Streams 2.0 JSON-LD Implementation
             w3c_json = {
             "@context": "https://www.w3.org/ns/activitystreams",
-            "summary": "{} is following {}".format("first user", "second user"),
+            "summary": "{} is following {}".format(actor_fullname, target_fullname),
             "type": "Follow",
-            "published": str(now),
+            "published": published_date,
             "actor": {
                 "type": "Person",
-                "id": home_url + "/user/" + str(request.user.id),
-                "name": request.user.first_name + " " + request.user.last_name,
-                "url": home_url + "/user/" + str(request.user.id)
+                "id": actor_profile_url,
+                "name": actor_fullname,
+                "url": actor_profile_url
             },
             "object": {
-                "id": home_url + "/user/" + str(user_id),
+                "id": target_profile_url,
                 "type": "Person",
-                "url": home_url + "/user/" + str(user_id),
-                "name": user.first_name + " " + user.last_name,
+                "url": target_profile_url,
+                "name": target_fullname,
             }
         }
             print(w3c_json)
@@ -419,3 +427,15 @@ def user_follow(request):
         except User.DoesNotExist:
             return JsonResponse({'status': 'error'})
     return JsonResponse({'status': 'error'})
+
+def get_published_date():
+    return str(datetime.datetime.now().isoformat())
+
+# Gets user id as input and returns user profile
+def get_user_profile_url(user_id):
+    return home_url + "/user/" + str(user_id)
+
+# Gets user object as input and returns User's Full Name
+def get_user_fullname(user):
+    return str(user.first_name + " " + user.last_name)
+
