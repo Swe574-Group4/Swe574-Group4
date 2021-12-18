@@ -6,11 +6,17 @@ from django.db.models import JSONField
 
 # Create your models here.
 class Action(models.Model):
+    activity = (('1', 'Follow'),
+                ('2', 'Unfollow'),
+                ('3', 'Search'),
+                ('4', 'Favourite'),
+                ('5', 'Unfavourite'))
+
     user = models.ForeignKey('auth.User',
                              related_name='actions',
                              db_index=True,
                              on_delete=CASCADE)
-    verb = models.CharField(max_length=255)
+    verb = models.CharField(max_length=255, choices=activity)
     target_ct = models.ForeignKey(ContentType,
                                   blank=True,
                                   null=True,
