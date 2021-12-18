@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models.deletion import CASCADE
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.db.models import JSONField
 
 # Create your models here.
 class Action(models.Model):
@@ -21,6 +22,7 @@ class Action(models.Model):
     target = GenericForeignKey('target_ct', 'target_id')
     created = models.DateTimeField(auto_now_add=True,
                                 db_index=True)
-    
+    action_json = JSONField(default=dict)
+
     class Meta:
         ordering = ('-created',)

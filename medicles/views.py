@@ -1,4 +1,6 @@
 import datetime
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
@@ -380,11 +382,37 @@ def user_follow(request):
     action = request.POST.get('action')
     print("User_id:", user_id)
     print("Action", action)
+
+    home_url = "http://medicles.com"
+    now = datetime.datetime.now().isoformat()
+
     if user_id and action:
         try:
             user = User.objects.get(id=user_id)
+
+            # Activity Streams 2.0 JSON-LD Implementation
+            w3c_json = {
+            "@context": "https://www.w3.org/ns/activitystreams",
+            "summary": "{} is following {}".format("first user", "second user"),
+            "type": "Follow",
+            "published": str(now),
+            "actor": {
+                "type": "Person",
+                "id": home_url + "/user/" + str(request.user.id),
+                "name": request.user.first_name + " " + request.user.last_name,
+                "url": home_url + "/user/" + str(request.user.id)
+            },
+            "object": {
+                "id": home_url + "/user/" + str(user_id),
+                "type": "Person",
+                "url": home_url + "/user/" + str(user_id),
+                "name": user.first_name + " " + user.last_name,
+            }
+        }
+            print(w3c_json)
+
             if action == 'follow':
-                create_action(request.user, 'is following', user)
+                create_action(request.user, 'is following', w3c_json, user)
             else:
                 delete_action(request.user, 'is following', user)
             return JsonResponse({'status': 'ok'})
