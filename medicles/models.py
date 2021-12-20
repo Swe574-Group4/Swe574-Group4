@@ -60,6 +60,10 @@ class Contact(models.Model):
     def __str__(self) -> str:
         return f'{self.user_from} follow {self.user_to}'
 
+class Search(models.Model):
+    user = models.IntegerField(blank=True, null=True)
+    term = models.TextField(blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
 
 class Annotation(models.Model):
     article = ManyToManyField(Article)

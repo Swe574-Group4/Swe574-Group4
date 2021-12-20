@@ -16,6 +16,7 @@
     <a href="{% url 'medicles:advanced_search' %}"><i class="fa fa-fw fa-search"></i> Search</a>
     {% if user.is_authenticated %}
         <a href="{% url 'medicles:user_search' %}">User Search</a>
+        <a href="{% url 'medicles:user_activity' %}">User Activity</a>
     <a>
       Hi {{ user.username }}!
       <a href="{% url 'medicles:logout' %}">Log Out</a>
