@@ -5,12 +5,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramDistance
 from django.db import IntegrityError
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import redirect, render, get_object_or_404, get_list_or_404
 
 from medicles.forms import AnnotationForm
 from medicles.models import Article, Tag, Annotation
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
+from collections import Counter
 
 
 # Create your views here.
@@ -283,7 +284,15 @@ def signup(request):
 def profile(request, user_id):
     user = get_object_or_404(User, pk=user_id)
 
-    return render(request, 'medicles/profile.html', {'user': user})
+    tags = get_list_or_404(Tag, user=user_id)
+    tagKeys = []
+    for tag in tags:
+        tagKeys.append(tag.tag_key)
+
+    c = Counter(tagKeys)
+    mostPopularTags = c.most_common(3)
+
+    return render(request, 'medicles/profile.html', {'user': user, 'tags': tags, 'mostPopularTags': mostPopularTags})
 
 
 def user_search(request):
