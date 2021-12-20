@@ -149,6 +149,18 @@
 
         <h3 class="w3-text-teal"><a href="{% url 'medicles:detail' article.article_id %}">{{ article.article_title }}
         </h3>
+
+
+        <button style="float:right;" id="favourite" data-id="{{ article.article_id }}"
+                data-action="{% if alreadyFavourited == True %}Un{% endif %}favourite"
+                class="w3-button w3-round-xlarge w3-teal w3-padding-medium">
+            {% if alreadyFavourited == False %}
+                follow
+            {% else %}
+                unfollow
+            {% endif %}
+        </button>
+
         <h6><a class="w3-text-gray"><strong>PMID</strong>: {{ article.article_id }} <strong>Publish
             Date: </strong>: {{ article.pub_date }}</a></h6>
         <h6><a class="w3-text-gray"><strong>Author List</strong>: {{ article.author_list }}</a></h6>
@@ -332,7 +344,31 @@
     });
 </script>
 
+<script type="text/javascript">
+
+    $('#favourite').click(function () {
+
+        $.post('{% url "medicles:favourite_article" article.article_id %} ',
+
+            {
+                id: $('#favourite').data('id'),
+                action: $('#favourite').data('action')
+            },
+
+            function (data) {
+                if (data['status'] == 'ok') {
+                    var previous_action = $('#favourite').data('action');
+
+                    // toggle data-action
+                    $('#favourite').data('action', previous_action == 'follow' ? 'unfollow' : 'follow');
+                    // toggle link text
+                    $('#favourite').text(previous_action == 'follow' ? 'unfollow' : 'follow');
+                }}
+            );
+    });
+</script>
 
 {% if alert_flag %}
     <script>alert("Tag exists. Please specify another tag name.")</script>
 {% endif %}
+

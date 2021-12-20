@@ -69,3 +69,7 @@ class Annotation(models.Model):
     startIndex = 0
     endIndex = 0
     creationDate = ""
+
+class FavouriteListTable(models.Model):
+    article= ManyToManyField(Article)
+    user=ManyToManyField(User)

@@ -8,7 +8,7 @@ from django.db import IntegrityError
 from django.shortcuts import redirect, render, get_object_or_404
 
 from medicles.forms import AnnotationForm
-from medicles.models import Article, Tag, Annotation
+from medicles.models import Article, Tag, Annotation, FavouriteListTable
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
 
@@ -126,7 +126,13 @@ def detail(request, article_id):
     else:
         alert_flag = False
 
-    return render(request, 'medicles/detail.html', {'article': article, 'alert_flag': alert_flag})
+    alreadyFavourited = False
+    if FavouriteListTable.objects.filter(article=article).exists():
+        if FavouriteListTable.objects.filter(user=request.user.id).exists():
+            alreadyFavourited = True
+
+    return render(request, 'medicles/detail.html',
+                  {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
 
 
 @login_required
@@ -207,7 +213,6 @@ def add_tag(request, article_id):
         form = TagForm()
 
     return alert_flag
-
 
 
 @login_required
@@ -305,7 +310,7 @@ def user_search_results(request):
 from actions.utils import create_action, delete_action
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -351,3 +356,28 @@ def user_follow(request):
         except User.DoesNotExist:
             return JsonResponse({'status': 'error'})
     return JsonResponse({'status': 'error'})
+
+@csrf_exempt
+#@ajax_required
+@require_POST
+@login_required
+def favourite_article(request,article_id):
+
+    article = Article.objects.get(pk=article_id)
+    user_updated = User.objects.get(pk=request.user.id)
+
+    if FavouriteListTable.objects.filter(article=article).exists():
+        if FavouriteListTable.objects.filter(user=request.user.id).exists():
+            pk_value = FavouriteListTable.objects.filter(article=article).values_list('pk', flat=True)[0]
+            favourite = FavouriteListTable(pk=pk_value)
+            favourite.article.remove(article)
+            favourite.user.remove(user_updated)
+
+    else:
+        favourite = FavouriteListTable()
+        favourite.save()
+        favourite.article.add(article)
+        favourite.user.add(user_updated)
+        #create_action(user_updated, 'is following', article_id)
+
+    return HttpResponseRedirect(request.META['HTTP_REFERER'])
