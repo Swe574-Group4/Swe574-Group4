@@ -1,4 +1,6 @@
 import datetime
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
@@ -121,10 +123,13 @@ def search(request):
     search_obj = Search(user=request.user.id, term=search_term)
     search_obj.save()
 
-    now = timezone.now()
-    last_minute = now - datetime.timedelta(seconds=120)
-    target_search = Search.objects.get(user=request.user.id, term=search_term, created__gte=last_minute)
-    create_action(user=request.user, verb='searched', target=target_search)
+    # now = timezone.now()
+    # last_minute = now - datetime.timedelta(seconds=120)
+    # target_search = Search.objects.get(user=request.user.id, term=search_term, created__gte=last_minute)
+    # create_action(user=request.user, verb='searched', target=target_search)
+
+    user_search_activity(request.user, search_term)
+
     return render(request, 'medicles/search_results.html', {'articles': articles})
 
 
@@ -226,7 +231,6 @@ def add_tag(request, article_id):
     return alert_flag
 
 
-
 @login_required
 def add_annotation(request, article_id):
     alert_flag = False
@@ -319,8 +323,6 @@ def user_search_results(request):
     return render(request, 'medicles/user_search_results.html', {'users': users})
 
 
-
-
 # User Activity View
 def user_activity(request):
     user_from = request.user.id
@@ -348,7 +350,7 @@ from django.views.decorators.http import require_POST
 from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 
-
+# Custom AJAX required decorator
 def ajax_required(f):
     """
     AJAX request required decorator
@@ -369,6 +371,8 @@ def ajax_required(f):
     wrap.__name__ = f.__name__
     return wrap
 
+# Used in W3C_JSON variable in activity functions
+home_url = "http://medicles.com"
 
 @csrf_exempt
 @ajax_required
@@ -380,14 +384,110 @@ def user_follow(request):
     action = request.POST.get('action')
     print("User_id:", user_id)
     print("Action", action)
+
+    # Target user object gets using below query
+    user = User.objects.get(id=user_id)
+    
+    published_date = get_published_date()
+    actor_profile_url = get_user_profile_url(request.user.id)
+    actor_fullname = get_user_fullname(request.user)
+
+    target_profile_url = get_user_profile_url(user.id)
+    target_fullname = get_user_fullname(user)
+
     if user_id and action:
         try:
-            user = User.objects.get(id=user_id)
+            # Moved below variable to outside of if-else condition
+            # user = User.objects.get(id=user_id)
+
+            # Activity Streams 2.0 JSON-LD Implementation
+            w3c_json = {
+            "@context": "https://www.w3.org/ns/activitystreams",
+            "summary": "{} is following {}".format(actor_fullname, target_fullname),
+            "type": "Follow",
+            "published": published_date,
+            "actor": {
+                "type": "Person",
+                "id": actor_profile_url,
+                "name": actor_fullname,
+                "url": actor_profile_url
+            },
+            "object": {
+                "id": target_profile_url,
+                "type": "Person",
+                "url": target_profile_url,
+                "name": target_fullname,
+            }
+        }
+            print(w3c_json)
+
             if action == 'follow':
-                create_action(request.user, 'is following', user)
+                create_action(request.user, verb=1, activity_json=w3c_json, target=user)
             else:
                 delete_action(request.user, 'is following', user)
             return JsonResponse({'status': 'ok'})
         except User.DoesNotExist:
             return JsonResponse({'status': 'error'})
     return JsonResponse({'status': 'error'})
+
+def get_published_date():
+    return str(datetime.datetime.now().isoformat())
+
+# Gets user id as input and returns user profile
+def get_user_profile_url(user_id):
+    return home_url + "/user/" + str(user_id)
+
+# Gets user object as input and returns User's Full Name
+def get_user_fullname(user):
+    return str(user.first_name + " " + user.last_name)
+
+# This function saves user activity of each user.
+# It is being used in search() function above.
+def user_search_activity(user, search_term):
+    now = timezone.now()
+    last_minute = now - datetime.timedelta(seconds=60)
+    target_search = Search.objects.filter(user=user.id, term=search_term, created__gte=last_minute).last()
+
+    # Variables used for actor
+    published_date = get_published_date()
+    actor_profile_url = get_user_profile_url(user.id)
+    actor_fullname = get_user_fullname(user)
+
+    # Variables used for target
+    target_object_url = get_target_search_url(target_search.id)
+    target_object_name = get_target_search_name(target_search.id)
+
+    # Activity Streams 2.0 JSON-LD Implementation
+    w3c_json = {
+            "@context": "https://www.w3.org/ns/activitystreams",
+            "summary": "{} searched {}".format(actor_fullname, target_object_name),
+            "type": "Search",
+            "published": published_date,
+            "actor": {
+                "type": "Person",
+                "id": actor_profile_url,
+                "name": actor_fullname,
+                "url": actor_profile_url
+            },
+            "object": {
+                "id": target_object_url,
+                "type": "Article",
+                "url": target_object_url,
+                "name": target_object_name,
+            }
+        }
+    print(w3c_json)
+
+    # Create action for search term for a specific user
+    create_action(user=user, verb=3, activity_json=w3c_json, target=target_search)
+    return True
+
+# Gets target search url used in activity json
+def get_target_search_url(id):
+    return home_url + "/search/" + str(id)
+
+# Gets target search name used in activity json
+def get_target_search_name(id):
+    search_obj = Search.objects.filter(id=id)
+    print('Search object: ', search_obj)
+    return search_obj[0].term
