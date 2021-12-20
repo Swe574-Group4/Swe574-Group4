@@ -14,7 +14,6 @@ from medicles.models import Article, Tag, Annotation
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
 
-
 from actions.utils import create_action, delete_action
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -24,6 +23,7 @@ from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 import datetime
 from django.utils import timezone
+
 
 # Create your views here.
 
@@ -104,7 +104,10 @@ def advanced_search(request):
             return render(request, 'medicles/advanced_search.html', {'failure': failure})
     else:
         return render(request, 'medicles/advanced_search.html')
+
+
 from .models import Search
+
 
 def search(request):
     search_term = request.GET.get('q', None)
@@ -239,23 +242,44 @@ def add_annotation(request, article_id):
 
         annotation_request_from_browser = ''
         if form.is_valid():
+            # Retrieve values for w3c_json_annotation from form data.
             article_will_be_updated = Article.objects.get(pk=article_id)  # Gets the article that will be associated
             user_will_be_updated = User.objects.get(pk=request.user.id)  # Gets the user that will be associated
             print(request.user.id)
             annotation_request_from_browser = form.cleaned_data['annotation_key'].split(':')
             print(annotation_request_from_browser)
-            annotation_key = annotation_request_from_browser[0]
+            annotation_input = annotation_request_from_browser[0]
             user_def_annotation_key = form.cleaned_data['user_def_annotation_key']
-
+            startIndex = form.data["annotation_start_index"]
+            endIndex = form.data["annotation_end_index"]
             # If Wikidata tag_key and user defined user_def_tag_key exists. It will create user_def_tag_key.
-            if annotation_key and user_def_annotation_key:
+            if annotation_input and user_def_annotation_key:
                 try:
-                    # tag_value = 'http://www.wikidata.org/wiki/' + annotation_request_from_browser[2]
-                    # tag = Tag(tag_key = form.cleaned_data['tag_key'],
-                    #         tag_value = form.cleaned_data['tag_value']
-                    #         )
+                    # Web Annotation Data Model - Text Position Selector JSON-LD Implementation
+                    w3c_jsonld_annotation = {
+                        "@context": "http://www.w3.org/ns/anno.jsonld",
+                        "id": f'http://localhost:8000/article/{article_id}',
+                        "type": "Annotation",
+                        "body": {
+                            "type": "TextualBody",
+                            "purpose": "Tagging",
+                            "value": annotation_input
+                        },
+                        "target": {
+                            "source": user_def_annotation_key,
+                            "selector": {
+                                "type": "TextPositionSelector",
+                                "start": startIndex,
+                                "end": endIndex
+                            }
+                        },
+                        "created": str(datetime.datetime.now().date())
+                    }
+
+                    print(w3c_jsonld_annotation)
                     annotation = Annotation(annotation_key=user_def_annotation_key,
-                                            annotation_value=annotation_key
+                                            annotation_value=annotation_input,
+                                            annotation_json=w3c_jsonld_annotation
                                             )
                     annotation.save()
                     annotation.article.add(article_will_be_updated)
@@ -331,24 +355,30 @@ def user_activity(request):
     for action in all_actions:
         if action.verb == 'is following':
             subject_user = User.objects.filter(id=user_from)
-            
+
             print(subject_user.all)
             target_user = User.objects.filter(id=action.target_id)
-            detailed_actions.append([subject_user[0], subject_user[0].first_name + ' ' + subject_user[0].last_name, action.verb, target_user[0].first_name + ' ' + target_user[0].last_name])
+            detailed_actions.append(
+                [subject_user[0], subject_user[0].first_name + ' ' + subject_user[0].last_name, action.verb,
+                 target_user[0].first_name + ' ' + target_user[0].last_name])
         if action.verb == 'searched':
             subject_user = User.objects.filter(id=user_from)
-            
+
             print(subject_user.all)
             target_term = Search.objects.filter(id=action.target_id)
-            detailed_actions.append([subject_user[0], subject_user[0].first_name + ' ' + subject_user[0].last_name, action.verb, target_term[0].term])
-    
+            detailed_actions.append(
+                [subject_user[0], subject_user[0].first_name + ' ' + subject_user[0].last_name, action.verb,
+                 target_term[0].term])
 
     return render(request, 'medicles/user_activity.html', {'detailed_actions': detailed_actions})
+
+
 from actions.utils import create_action, delete_action
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
+
 
 # Custom AJAX required decorator
 def ajax_required(f):
@@ -371,8 +401,10 @@ def ajax_required(f):
     wrap.__name__ = f.__name__
     return wrap
 
+
 # Used in W3C_JSON variable in activity functions
 home_url = "http://medicles.com"
+
 
 @csrf_exempt
 @ajax_required
@@ -387,7 +419,7 @@ def user_follow(request):
 
     # Target user object gets using below query
     user = User.objects.get(id=user_id)
-    
+
     published_date = get_published_date()
     actor_profile_url = get_user_profile_url(request.user.id)
     actor_fullname = get_user_fullname(request.user)
@@ -402,23 +434,23 @@ def user_follow(request):
 
             # Activity Streams 2.0 JSON-LD Implementation
             w3c_json = {
-            "@context": "https://www.w3.org/ns/activitystreams",
-            "summary": "{} is following {}".format(actor_fullname, target_fullname),
-            "type": "Follow",
-            "published": published_date,
-            "actor": {
-                "type": "Person",
-                "id": actor_profile_url,
-                "name": actor_fullname,
-                "url": actor_profile_url
-            },
-            "object": {
-                "id": target_profile_url,
-                "type": "Person",
-                "url": target_profile_url,
-                "name": target_fullname,
+                "@context": "https://www.w3.org/ns/activitystreams",
+                "summary": "{} is following {}".format(actor_fullname, target_fullname),
+                "type": "Follow",
+                "published": published_date,
+                "actor": {
+                    "type": "Person",
+                    "id": actor_profile_url,
+                    "name": actor_fullname,
+                    "url": actor_profile_url
+                },
+                "object": {
+                    "id": target_profile_url,
+                    "type": "Person",
+                    "url": target_profile_url,
+                    "name": target_fullname,
+                }
             }
-        }
             print(w3c_json)
 
             if action == 'follow':
@@ -430,16 +462,20 @@ def user_follow(request):
             return JsonResponse({'status': 'error'})
     return JsonResponse({'status': 'error'})
 
+
 def get_published_date():
     return str(datetime.datetime.now().isoformat())
+
 
 # Gets user id as input and returns user profile
 def get_user_profile_url(user_id):
     return home_url + "/user/" + str(user_id)
 
+
 # Gets user object as input and returns User's Full Name
 def get_user_fullname(user):
     return str(user.first_name + " " + user.last_name)
+
 
 # This function saves user activity of each user.
 # It is being used in search() function above.
@@ -459,35 +495,38 @@ def user_search_activity(user, search_term):
 
     # Activity Streams 2.0 JSON-LD Implementation
     w3c_json = {
-            "@context": "https://www.w3.org/ns/activitystreams",
-            "summary": "{} searched {}".format(actor_fullname, target_object_name),
-            "type": "Search",
-            "published": published_date,
-            "actor": {
-                "type": "Person",
-                "id": actor_profile_url,
-                "name": actor_fullname,
-                "url": actor_profile_url
-            },
-            "object": {
-                "id": target_object_url,
-                "type": "Article",
-                "url": target_object_url,
-                "name": target_object_name,
-            }
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "summary": "{} searched {}".format(actor_fullname, target_object_name),
+        "type": "Search",
+        "published": published_date,
+        "actor": {
+            "type": "Person",
+            "id": actor_profile_url,
+            "name": actor_fullname,
+            "url": actor_profile_url
+        },
+        "object": {
+            "id": target_object_url,
+            "type": "Article",
+            "url": target_object_url,
+            "name": target_object_name,
         }
+    }
     print(w3c_json)
 
     # Create action for search term for a specific user
     create_action(user=user, verb=3, activity_json=w3c_json, target=target_search)
     return True
 
+
 # Gets target search url used in activity json
 def get_target_search_url(id):
     return home_url + "/search/" + str(id)
+
 
 # Gets target search name used in activity json
 def get_target_search_name(id):
     search_obj = Search.objects.filter(id=id)
     print('Search object: ', search_obj)
     return search_obj[0].term
+
