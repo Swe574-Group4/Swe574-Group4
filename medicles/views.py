@@ -373,13 +373,16 @@ def favourite_article(request,article_id):
             favourite.article.remove(article)
             favourite.user.remove(user_updated)
 
+            # return render(request, 'medicles/detail.html', {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
+
     else:
         favourite = FavouriteListTable()
         favourite.save()
         favourite.article.add(article)
         favourite.user.add(user_updated)
-        #create_action(user_updated, 'is following', article_id)
 
-    #HttpResponseRedirect('/')
+        # return render(request, 'medicles/detail.html',
+        #               {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
+
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
