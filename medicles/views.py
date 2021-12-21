@@ -335,6 +335,10 @@ def ajax_required(f):
     return wrap
 
 
+# Used in W3C_JSON variable in activity functions
+home_url = "http://medicles.com"
+
+
 @csrf_exempt
 @ajax_required
 @require_POST
@@ -345,17 +349,124 @@ def user_follow(request):
     action = request.POST.get('action')
     print("User_id:", user_id)
     print("Action", action)
+
+    # Target user object gets using below query
+    user = User.objects.get(id=user_id)
+
+    published_date = get_published_date()
+    actor_profile_url = get_user_profile_url(request.user.id)
+    actor_fullname = get_user_fullname(request.user)
+
+    target_profile_url = get_user_profile_url(user.id)
+    target_fullname = get_user_fullname(user)
+
     if user_id and action:
         try:
-            user = User.objects.get(id=user_id)
+            # Moved below variable to outside of if-else condition
+            # user = User.objects.get(id=user_id)
+
+            # Activity Streams 2.0 JSON-LD Implementation
+            w3c_json = {
+                "@context": "https://www.w3.org/ns/activitystreams",
+                "summary": "{} is following {}".format(actor_fullname, target_fullname),
+                "type": "Follow",
+                "published": published_date,
+                "actor": {
+                    "type": "Person",
+                    "id": actor_profile_url,
+                    "name": actor_fullname,
+                    "url": actor_profile_url
+                },
+                "object": {
+                    "id": target_profile_url,
+                    "type": "Person",
+                    "url": target_profile_url,
+                    "name": target_fullname,
+                }
+            }
+            print(w3c_json)
+
             if action == 'follow':
-                create_action(request.user, 'is following', user)
+                create_action(request.user, verb=1, activity_json=w3c_json, target=user)
             else:
                 delete_action(request.user, 'is following', user)
             return JsonResponse({'status': 'ok'})
         except User.DoesNotExist:
             return JsonResponse({'status': 'error'})
     return JsonResponse({'status': 'error'})
+
+
+def get_published_date():
+    return str(datetime.datetime.now().isoformat())
+
+
+# Gets user id as input and returns user profile
+def get_user_profile_url(user_id):
+    return home_url + "/user/" + str(user_id)
+
+
+# Gets user object as input and returns User's Full Name
+def get_user_fullname(user):
+    return str(user.first_name + " " + user.last_name)
+
+
+# This function saves user activity of each user.
+# It is being used in search() function above.
+def user_search_activity(user, search_term):
+    now = timezone.now()
+    last_minute = now - datetime.timedelta(seconds=60)
+    target_search = Search.objects.filter(user=user.id, term=search_term, created__gte=last_minute).last()
+
+    # Variables used for actor
+    published_date = get_published_date()
+    actor_profile_url = get_user_profile_url(user.id)
+    actor_fullname = get_user_fullname(user)
+
+    # Variables used for target
+    target_object_url = get_target_search_url(target_search.id)
+    target_object_name = get_target_search_name(target_search.id)
+
+    # Activity Streams 2.0 JSON-LD Implementation
+    w3c_json = {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "summary": "{} searched {}".format(actor_fullname, target_object_name),
+        "type": "Search",
+        "published": published_date,
+        "actor": {
+            "type": "Person",
+            "id": actor_profile_url,
+            "name": actor_fullname,
+            "url": actor_profile_url
+        },
+        "object": {
+            "id": target_object_url,
+            "type": "Article",
+            "url": target_object_url,
+            "name": target_object_name,
+        }
+    }
+    print(w3c_json)
+
+    # Create action for search term for a specific user
+    create_action(user=user, verb=3, activity_json=w3c_json, target=target_search)
+    return True
+
+
+# Gets target search url used in activity json
+def get_target_search_url(id):
+    return home_url + "/search/" + str(id)
+
+
+# Gets target search name used in activity json
+def get_target_search_name(id):
+    search_obj = Search.objects.filter(id=id)
+    print('Search object: ', search_obj)
+    return search_obj[0].term
+
+# Gets target article url used in activity json
+def get_target_article_url(id):
+    return home_url + "/article/" + str(id)
+
 
 @csrf_exempt
 #@ajax_required
@@ -366,6 +477,38 @@ def favourite_article(request,article_id):
     article = Article.objects.get(pk=article_id)
     user_updated = User.objects.get(pk=request.user.id)
 
+    # Variables used for actor
+    published_date = get_published_date()
+    actor_profile_url = get_user_profile_url(user_updated)  ##
+    actor_fullname = get_user_fullname(user_updated)
+
+    # Variables used for target
+    target_object_url = get_target_article_url(article_id)
+    target_object_name = article.article_title
+
+    # Activity Streams 2.0 JSON-LD Implementation
+    w3c_json = {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "summary": "{} favorited {}".format(actor_fullname, target_object_name),
+        "type": "Favourite",
+        "published": published_date,
+        "actor": {
+            "type": "Person",
+            "id": actor_profile_url,
+            "name": actor_fullname,
+            "url": actor_profile_url
+        },
+        "object": {
+            "id": target_object_url,
+            "type": "Article",
+            "url": target_object_url,
+            "name": target_object_name,
+        }
+    }
+    print(w3c_json)
+
+
+    # remove user and article id info from favouriteListTable in database
     if FavouriteListTable.objects.filter(article=article).exists():
         if FavouriteListTable.objects.filter(user=request.user.id).exists():
             pk_value = FavouriteListTable.objects.filter(article=article).values_list('pk', flat=True)[0]
@@ -373,8 +516,11 @@ def favourite_article(request,article_id):
             favourite.article.remove(article)
             favourite.user.remove(user_updated)
 
+            delete_action(user=user_updated, verb=3, action_json=w3c_json, target=article)
+
             # return render(request, 'medicles/detail.html', {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
 
+    # save and link user and article id in database
     else:
         favourite = FavouriteListTable()
         favourite.save()
@@ -384,5 +530,7 @@ def favourite_article(request,article_id):
         # return render(request, 'medicles/detail.html',
         #               {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
 
+        # Create action for search term for a specific user
+        create_action(user=user_updated, verb=3, action_json=w3c_json, target=article)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
