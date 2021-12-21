@@ -155,9 +155,9 @@
                 data-action="{% if alreadyFavourited == True %}Un{% endif %}favourite"
                 class="w3-button w3-round-xlarge w3-teal w3-padding-medium">
             {% if alreadyFavourited == False %}
-                follow
+                favourite
             {% else %}
-                unfollow
+                unfavourite
             {% endif %}
         </button>
 
@@ -356,14 +356,15 @@
             },
 
             function (data) {
-                if (data['status'] == 'ok') {
+                //if (data['status'] == 'ok') {
                     var previous_action = $('#favourite').data('action');
 
                     // toggle data-action
-                    $('#favourite').data('action', previous_action == 'follow' ? 'unfollow' : 'follow');
+                    $('#favourite').data('action', previous_action == 'favourite' ? 'unfavourite' : 'favourite');
+
                     // toggle link text
-                    $('#favourite').text(previous_action == 'follow' ? 'unfollow' : 'follow');
-                }}
+                    $('#favourite').text(previous_action == 'favourite' ? 'unfavourite' : 'favourite');
+                }  //}
             );
 
         //location.reload(true)

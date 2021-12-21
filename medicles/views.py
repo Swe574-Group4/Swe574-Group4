@@ -380,4 +380,6 @@ def favourite_article(request,article_id):
         favourite.user.add(user_updated)
         #create_action(user_updated, 'is following', article_id)
 
+    #HttpResponseRedirect('/')
+
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
