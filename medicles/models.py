@@ -3,6 +3,9 @@ from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.db import models
 from django.db.models.fields.related import ManyToManyField
 
+from django.db.models import JSONField
+
+
 
 # Create your models here.
 
@@ -61,15 +64,17 @@ class Contact(models.Model):
         return f'{self.user_from} follow {self.user_to}'
 
 
+
+class Search(models.Model):
+    user = models.IntegerField(blank=True, null=True)
+    term = models.TextField(blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+
 class Annotation(models.Model):
     article = ManyToManyField(Article)
     user = ManyToManyField(User)
     annotation_key = models.CharField(unique=True, blank=True, null=True, max_length=100)
     annotation_value = models.CharField(blank=True, null=True, max_length=100)
-    startIndex = 0
-    endIndex = 0
-    creationDate = ""
 
-class FavouriteListTable(models.Model):
-    article= ManyToManyField(Article)
-    user=ManyToManyField(User)
+    annotation_json = JSONField(default=dict)
+

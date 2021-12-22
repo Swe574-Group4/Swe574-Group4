@@ -171,11 +171,13 @@
                          class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }} </a></span>
             {% endfor %}
         </p>
+
+        <!–– {{ annotation_obj.annotation_json }} for retrieving Json data ––>
         <p><strong>Annotations:</strong>
-            {% for tag_obj in article.annotation_set.all %}
-                <span><a href="{{ tag_obj.annotation_value }}"
+            {% for annotation_obj in article.annotation_set.all %}
+                <span><a href="{{ annotation_obj.annotation_value }}"
                          class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">
-                    {{ tag_obj.annotation_key }}-{{ tag_obj.annotation_value }}</a></span>
+                    {{ annotation_obj.annotation_key }}-{{ annotation_obj.annotation_value }}</a></span>
             {% endfor %}
         </p>
     </div>
@@ -244,22 +246,25 @@
                     <br><br>
 
 
+                    <input type="submit" value="Add Annotation" id="annotationBT"
+                           class="w3-teal w3-button w3-round-xxlarge" style="width:22%">
+
                     <label for="annotation_indices"><b></b></label>
-                    <input type="text"
+                    <input type="hidden"
+
                            name="annotation_start_index" id="annotationStartIndex"
                            class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
                            style="width:60%">
                     <br><br>
 
                     <label for="annotation_indices"><b></b></label>
-                    <input type="text"
+
+                    <input type="hidden"
+
                            name="annotation_end_index" id="annotationEndIndex"
                            class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
                            style="width:60%">
                     <br><br>
-
-                    <input type="submit" value="Add Annotation" id="annotationBT"
-                           class="w3-teal w3-button w3-round-xxlarge" style="width:22%">
 
 
                     <br><br><br><br><br><br><br><br><br><br>
@@ -293,6 +298,7 @@
             document.getElementById("annotationStartIndex").value = t.anchorOffset
             document.getElementById("annotationEndIndex").value = t.focusOffset
         }
+
     }
 
     document.onmouseup = gText;
@@ -300,6 +306,7 @@
     if (!document.all) {
         document.captureEvents(Event.MOUSEUP);
     }
+
 
     function cancelAnnotation() {
 

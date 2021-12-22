@@ -38,6 +38,10 @@ urlpatterns = [
     # User Follow Action
     path('users/follow/', views.user_follow, name='user_follow'),
 
+
     path('favouriteArticle/<int:article_id>/', views.favourite_article, name='favourite_article'),
+
+    # User Activity
+    path('useractivity/', views.user_activity, name='user_activity'),
 
 ]
