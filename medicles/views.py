@@ -483,7 +483,7 @@ def favourite_article(request,article_id):
     actor_fullname = get_user_fullname(user_updated)
 
     # Variables used for target
-    target_object_url = get_target_article_url(article_id)
+    target_object_url = get_target_article_url(article.article_id)
     target_object_name = article.article_title
 
     # Activity Streams 2.0 JSON-LD Implementation
@@ -507,7 +507,6 @@ def favourite_article(request,article_id):
     }
     print(w3c_json)
 
-
     # remove user and article id info from favouriteListTable in database
     if FavouriteListTable.objects.filter(article=article).exists():
         if FavouriteListTable.objects.filter(user=request.user.id).exists():
@@ -516,7 +515,7 @@ def favourite_article(request,article_id):
             favourite.article.remove(article)
             favourite.user.remove(user_updated)
 
-            delete_action(user=user_updated, verb=3, action_json=w3c_json, target=article)
+            #delete_action(user=user_updated, verb=3, activity_json=w3c_json, target=article)
 
             # return render(request, 'medicles/detail.html', {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
 
@@ -531,6 +530,6 @@ def favourite_article(request,article_id):
         #               {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
 
         # Create action for search term for a specific user
-        create_action(user=user_updated, verb=3, action_json=w3c_json, target=article)
+        create_action(user=user_updated, verb=3, activity_json=w3c_json, target=article)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])

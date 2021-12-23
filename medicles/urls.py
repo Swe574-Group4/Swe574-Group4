@@ -40,4 +40,6 @@ urlpatterns = [
 
     path('favouriteArticle/<int:article_id>/', views.favourite_article, name='favourite_article'),
 
+    # path('favourites/', views.favourites, name='favourites')
+
 ]

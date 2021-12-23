@@ -356,7 +356,7 @@
             },
 
             function (data) {
-                //if (data['status'] == 'ok') {
+                if (data['status'] == 'ok') {
                     var previous_action = $('#favourite').data('action');
 
                     // toggle data-action
@@ -364,7 +364,9 @@
 
                     // toggle link text
                     $('#favourite').text(previous_action == 'favourite' ? 'unfavourite' : 'favourite');
-                }  //}
+                    location.reload(true)
+                    }
+                }
             );
 
         //location.reload(true)
