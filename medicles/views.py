@@ -469,11 +469,10 @@ def get_target_article_url(id):
 
 
 @csrf_exempt
-#@ajax_required
+# @ajax_required
 @require_POST
 @login_required
-def favourite_article(request,article_id):
-
+def favourite_article(request, article_id):
     article = Article.objects.get(pk=article_id)
     user_updated = User.objects.get(pk=request.user.id)
 
@@ -514,10 +513,6 @@ def favourite_article(request,article_id):
             favourite = FavouriteListTable(pk=pk_value)
             favourite.article.remove(article)
             favourite.user.remove(user_updated)
-
-            #delete_action(user=user_updated, verb=3, activity_json=w3c_json, target=article)
-
-            # return render(request, 'medicles/detail.html', {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
 
     # save and link user and article id in database
     else:

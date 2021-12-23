@@ -39,7 +39,4 @@ urlpatterns = [
     path('users/follow/', views.user_follow, name='user_follow'),
 
     path('favouriteArticle/<int:article_id>/', views.favourite_article, name='favourite_article'),
-
-    # path('favourites/', views.favourites, name='favourites')
-
 ]
