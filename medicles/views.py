@@ -509,22 +509,19 @@ def favourite_article(request, article_id):
     # remove user and article id info from favouriteListTable in database
     if FavouriteListTable.objects.filter(article=article).exists():
         if FavouriteListTable.objects.filter(user=request.user.id).exists():
-            pk_value = FavouriteListTable.objects.filter(article=article).values_list('pk', flat=True)[0]
-            favourite = FavouriteListTable(pk=pk_value)
-            favourite.article.remove(article)
-            favourite.user.remove(user_updated)
+
+            favourite = FavouriteListTable.objects.filter(article=article, user=user_updated)
+            favourite.delete()
+
+            # Delete action for favorite article by specific user
+            delete_action(user=user_updated, verb=3, target=article)
 
     # save and link user and article id in database
     else:
-        favourite = FavouriteListTable()
+        favourite = FavouriteListTable(article=article, user=user_updated)
         favourite.save()
-        favourite.article.add(article)
-        favourite.user.add(user_updated)
 
-        # return render(request, 'medicles/detail.html',
-        #               {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
-
-        # Create action for search term for a specific user
+        # Create action for favorite article by specific user
         create_action(user=user_updated, verb=3, activity_json=w3c_json, target=article)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])

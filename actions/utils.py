@@ -32,6 +32,13 @@ def create_action(user, verb, activity_json, target=None):
 
 def delete_action(user, verb, target=None):
     # no existing actions found
-    action = Action.objects.filter(user_id=user.id, verb=verb, target_id=target.id)
+    target_ct = ContentType.objects.get_for_model(target)
+    if 'article' in str(target_ct):
+        print('ifx')
+        action = Action.objects.filter(user_id=user.id, verb=verb, target_id=target.article_id)
+        print(action)
+    else:
+        print('elsex')
+        action = Action.objects.filter(user_id=user.id, verb=verb, target_id=target.id)
     action.delete()
     return True

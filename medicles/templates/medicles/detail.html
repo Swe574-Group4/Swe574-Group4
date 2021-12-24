@@ -348,28 +348,7 @@
 
     $('#favourite').click(function () {
 
-        $.post('{% url "medicles:favourite_article" article.article_id %} ',
-
-            {
-                id: $('#favourite').data('id'),
-                action: $('#favourite').data('action')
-            },
-
-            function (data) {
-                if (data['status'] == 'ok') {
-                    var previous_action = $('#favourite').data('action');
-
-                    // toggle data-action
-                    $('#favourite').data('action', previous_action == 'favourite' ? 'unfavourite' : 'favourite');
-
-                    // toggle link text
-                    $('#favourite').text(previous_action == 'favourite' ? 'unfavourite' : 'favourite');
-                    location.reload(true)
-                    }
-                }
-            );
-
-        //location.reload(true)
+        $.post('{% url "medicles:favourite_article" article.article_id %}');
 
     });
 </script>

@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.db import models
 from django.db.models.fields.related import ManyToManyField
-
+from django.db.models.deletion import CASCADE
 
 # Create your models here.
 
@@ -70,6 +70,17 @@ class Annotation(models.Model):
     endIndex = 0
     creationDate = ""
 
+
 class FavouriteListTable(models.Model):
-    article= ManyToManyField(Article)
-    user=ManyToManyField(User)
+
+    article = models.ForeignKey(Article,
+                                db_index=True,
+                                blank=True,
+                                null=True,
+                                on_delete=CASCADE)
+    user = models.ForeignKey('auth.User',
+                             db_index=True,
+
+                             blank=True,
+                             null=True,
+                             on_delete=CASCADE)
