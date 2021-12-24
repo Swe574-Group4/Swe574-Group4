@@ -4,7 +4,8 @@ from django.contrib.contenttypes.models import ContentType
 from .models import Action
 
 
-def create_action(user, verb, activity_json, target=None):
+def create_action(user, verb,  activity_json, target=None):
+
     # check for any similar aciton made in the last minute
     now = timezone.now()
     last_minute = now - datetime.timedelta(seconds=60)
