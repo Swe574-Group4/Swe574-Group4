@@ -108,6 +108,7 @@ def search(request):
     articles = Article.objects.annotate(rank=SearchRank(
         search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4).order_by('-rank')
     print("mainsearch")
+    print(articles)
     return render(request, 'medicles/search_results.html', {'articles': articles})
 
 
@@ -463,6 +464,7 @@ def get_target_search_name(id):
     print('Search object: ', search_obj)
     return search_obj[0].term
 
+
 # Gets target article url used in activity json
 def get_target_article_url(id):
     return home_url + "/article/" + str(id)
@@ -507,14 +509,14 @@ def favourite_article(request, article_id):
     print(w3c_json)
 
     # remove user and article id info from favouriteListTable in database
-    if FavouriteListTable.objects.filter(article=article).exists():
-        if FavouriteListTable.objects.filter(user=request.user.id).exists():
+    if FavouriteListTable.objects.filter(article=article).exists() and FavouriteListTable.objects.filter(
+            user=request.user.id).exists():
 
-            favourite = FavouriteListTable.objects.filter(article=article, user=user_updated)
-            favourite.delete()
+        favourite = FavouriteListTable.objects.filter(article=article, user=user_updated)
+        favourite.delete()
 
-            # Delete action for favorite article by specific user
-            delete_action(user=user_updated, verb=3, target=article)
+        # Delete action for favorite article by specific user
+        delete_action(user=user_updated, verb=3, target=article)
 
     # save and link user and article id in database
     else:
@@ -525,3 +527,17 @@ def favourite_article(request, article_id):
         create_action(user=user_updated, verb=3, activity_json=w3c_json, target=article)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+def favourite_article_List(request):
+    #get current user and user's favorited articles
+    current_user = User.objects.get(pk=request.user.id)
+    users_favourite_list = FavouriteListTable.objects.filter(user=current_user)
+
+    # retrieve article_id and the article objects from Article table
+    article_id_list=[]
+    for object in users_favourite_list:
+        article_id_list.append(object.article_id)
+    articles = Article.objects.filter(article_id__in=article_id_list)
+    print(articles)
+
+    return render(request, 'medicles/favourites.html', {'articles': articles})
