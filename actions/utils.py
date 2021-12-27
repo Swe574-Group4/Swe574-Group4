@@ -16,11 +16,11 @@ def create_action(user, verb,  activity_json, target=None):
         target_ct = ContentType.objects.get_for_model(target)
         print('target_ct',target_ct)
         if 'article' in str(target_ct) :
-            print('if')
+
             similar_actions = similar_actions.filter(target_ct=target_ct,
                                                      target_id=target.article_id)
         else:
-            print('else')
+
             similar_actions = similar_actions.filter(target_ct=target_ct,
                                                  target_id=target.id)
     if not similar_actions:
@@ -35,11 +35,11 @@ def delete_action(user, verb, target=None):
     # no existing actions found
     target_ct = ContentType.objects.get_for_model(target)
     if 'article' in str(target_ct):
-        print('ifx')
+
         action = Action.objects.filter(user_id=user.id, verb=verb, target_id=target.article_id)
         print(action)
     else:
-        print('elsex')
+
         action = Action.objects.filter(user_id=user.id, verb=verb, target_id=target.id)
     action.delete()
     return True
