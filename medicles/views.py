@@ -1,5 +1,6 @@
 import datetime
 
+import psycopg2
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -282,7 +283,9 @@ def signup(request):
 
 
 def profile(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
+    user = User.objects.get(pk=user_id)
+    followerCount= 0
+    followingCount= 0
 
     tags = get_list_or_404(Tag, user=user_id)
     tagKeys = []
@@ -292,7 +295,7 @@ def profile(request, user_id):
     c = Counter(tagKeys)
     mostPopularTags = c.most_common(3)
 
-    return render(request, 'medicles/profile.html', {'user': user, 'tags': tags, 'mostPopularTags': mostPopularTags})
+    return render(request, 'medicles/profile.html', {'user': user, 'tags': tags, 'mostPopularTags': mostPopularTags,'followerCount': followerCount,'followingCount': followingCount})
 
 
 def user_search(request):
@@ -301,14 +304,21 @@ def user_search(request):
 
 def user_search_results(request):
     search_term = request.GET.get('name', None)
-    if not search_term:
+    search_term_tag = request.GET.get('tags', None)
+    if not search_term and search_term_tag:
         render(request, 'medicles/user_search.html')
     search_vector = SearchVector('username', weight='A') + SearchVector('first_name', weight='B') + SearchVector(
         'last_name', weight='B')
+    search_vector_tag = SearchVector('tag_key', weight='A')
     search_term_updated = SearchQuery(search_term, search_type='websearch')
+    search_term_updated_tag = SearchQuery(search_term_tag, search_type='websearch')
     users = User.objects.annotate(rank=SearchRank(search_vector, search_term_updated, cover_density=True)).filter(
         rank__gte=0.4).order_by('-rank')
-    return render(request, 'medicles/user_search_results.html', {'users': users})
+    tags = Tag.objects.annotate(rank=SearchRank(search_vector_tag, search_term_updated_tag, cover_density=True)).filter(
+        rank__gte=0.4).order_by('-rank')
+    taggedUsers = getUsersFromTagId(tags)
+
+    return render(request, 'medicles/user_search_results.html', {'users': users, 'taggedUsers': taggedUsers})
 
 
 from actions.utils import create_action, delete_action
@@ -360,3 +370,32 @@ def user_follow(request):
         except User.DoesNotExist:
             return JsonResponse({'status': 'error'})
     return JsonResponse({'status': 'error'})
+
+
+def getUsersFromTagId(tags) -> list[User]:
+    userTags = getUsersWithQuery(tags)
+
+    userList = [User]
+    for userTag in userTags:
+        user = get_object_or_404(User, id=userTag)
+        userList.append(user)
+
+    return userList
+
+
+def getUsersWithQuery(tags) -> list[int]:
+    userTags = []
+    conn = psycopg2.connect(
+        host="localhost",
+        database="medicles",
+        user="postgres",
+        password="postgres"
+    )
+    cur = conn.cursor()
+    sql = 'select user_id from medicles_tag_user where id = %s;'
+    for tag1 in tags:
+        cur.execute(sql, (tag1.id,))
+        result = cur.fetchone()
+        userTags.append(result[0])
+
+    return userTags
