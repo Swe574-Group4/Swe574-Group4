@@ -592,14 +592,14 @@ def favourite_article(request, article_id):
     print(w3c_json)
 
     # remove user and article id info from favouriteListTable in database
-    if FavouriteListTable.objects.filter(article=article).exists():
-        if FavouriteListTable.objects.filter(user=request.user.id).exists():
+    if FavouriteListTable.objects.filter(article=article).exists() and FavouriteListTable.objects.filter(
+            user=request.user.id).exists():
 
-            favourite = FavouriteListTable.objects.filter(article=article, user=user_updated)
-            favourite.delete()
+        favourite = FavouriteListTable.objects.filter(article=article, user=user_updated)
+        favourite.delete()
 
-            # Delete action for favorite article by specific user
-            delete_action(user=user_updated, verb=3, target=article)
+        # Delete action for favorite article by specific user
+        delete_action(user=user_updated, verb=3, target=article)
 
     # save and link user and article id in database
     else:
