@@ -1,0 +1,58 @@
+.firstAndLastName {
+    margin-top: 100px;
+    margin-left: 32%;
+    width: 35%;
+    padding: 10px;
+    padding-bottom: 30px;
+    border: 5px solid gray;
+}
+
+.AlertDiv {
+    margin-left: 120px;
+    line-height: 51px;
+    vertical-align: middle;
+
+}
+
+.followerCount {
+    width: 150px;
+    height: 50px;
+    border: 4px solid blue;
+}
+
+.float-container {
+    border: 3px solid #fff;
+    padding: 10px;
+    margin-left: 80px;
+}
+
+.float-child {
+    width: 40%;
+    float: left;
+    padding: 20px;
+    border: 2px solid green;
+    margin-left: 10px;
+}
+
+.registerbtn {
+    background-color: #04AA6D;
+    color: white;
+    padding: 16px 20px;
+    margin-left: 250px;
+    margin-top: 50px;
+    border: none;
+    cursor: pointer;
+    width: 15%;
+    opacity: 0.9;
+}
+
+.titleOfTab {
+    text-align: center;
+}
+
+#tagsList {
+    background-color: red;
+    margin-left: 100px;
+
+}
+
