@@ -7,10 +7,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramDistance
 from django.db import IntegrityError
+
 from django.shortcuts import redirect, render, get_object_or_404, get_list_or_404
 
 from medicles.forms import AnnotationForm
-from medicles.models import Article, Tag, Annotation
+from medicles.models import Article, Tag, Annotation, FavouriteListTable
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
 from collections import Counter
@@ -24,7 +25,6 @@ from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 import datetime
 from django.utils import timezone
-
 
 # Create your views here.
 
@@ -151,8 +151,13 @@ def detail(request, article_id):
 
     else:
         alert_flag = False
+    alreadyFavourited = False
+    if FavouriteListTable.objects.filter(article=article).exists():
+        if FavouriteListTable.objects.filter(user=request.user.id).exists():
+            alreadyFavourited = True
 
-    return render(request, 'medicles/detail.html', {'article': article, 'alert_flag': alert_flag})
+    return render(request, 'medicles/detail.html',
+                  {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
 
 
 @login_required
@@ -243,12 +248,16 @@ def add_annotation(request, article_id):
 
         annotation_request_from_browser = ''
         if form.is_valid():
+
             # Retrieve values for w3c_json_annotation from form data.
+
             article_will_be_updated = Article.objects.get(pk=article_id)  # Gets the article that will be associated
             user_will_be_updated = User.objects.get(pk=request.user.id)  # Gets the user that will be associated
             print(request.user.id)
             annotation_request_from_browser = form.cleaned_data['annotation_key'].split(':')
             print(annotation_request_from_browser)
+            
+
             annotation_input = annotation_request_from_browser[0]
             user_def_annotation_key = form.cleaned_data['user_def_annotation_key']
             startIndex = form.data["annotation_start_index"]
@@ -539,3 +548,65 @@ def get_target_search_name(id):
     print('Search object: ', search_obj)
     return search_obj[0].term
 
+# Gets target article url used in activity json
+def get_target_article_url(id):
+    return home_url + "/article/" + str(id)
+
+
+@csrf_exempt
+# @ajax_required
+@require_POST
+@login_required
+def favourite_article(request, article_id):
+    article = Article.objects.get(pk=article_id)
+    user_updated = User.objects.get(pk=request.user.id)
+
+    # Variables used for actor
+    published_date = get_published_date()
+    actor_profile_url = get_user_profile_url(user_updated)  ##
+    actor_fullname = get_user_fullname(user_updated)
+
+    # Variables used for target
+    target_object_url = get_target_article_url(article.article_id)
+    target_object_name = article.article_title
+
+    # Activity Streams 2.0 JSON-LD Implementation
+    w3c_json = {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "summary": "{} favorited {}".format(actor_fullname, target_object_name),
+        "type": "Favourite",
+        "published": published_date,
+        "actor": {
+            "type": "Person",
+            "id": actor_profile_url,
+            "name": actor_fullname,
+            "url": actor_profile_url
+        },
+        "object": {
+            "id": target_object_url,
+            "type": "Article",
+            "url": target_object_url,
+            "name": target_object_name,
+        }
+    }
+    print(w3c_json)
+
+    # remove user and article id info from favouriteListTable in database
+    if FavouriteListTable.objects.filter(article=article).exists() and FavouriteListTable.objects.filter(
+            user=request.user.id).exists():
+
+        favourite = FavouriteListTable.objects.filter(article=article, user=user_updated)
+        favourite.delete()
+
+        # Delete action for favorite article by specific user
+        delete_action(user=user_updated, verb=3, target=article)
+
+    # save and link user and article id in database
+    else:
+        favourite = FavouriteListTable(article=article, user=user_updated)
+        favourite.save()
+
+        # Create action for favorite article by specific user
+        create_action(user=user_updated, verb=3, activity_json=w3c_json, target=article)
+
+    return HttpResponseRedirect(request.META['HTTP_REFERER'])

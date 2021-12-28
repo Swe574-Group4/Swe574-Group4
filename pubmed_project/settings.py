@@ -84,6 +84,7 @@ WSGI_APPLICATION = 'pubmed_project.wsgi.application'
 # ATTENTION !!!
 # While running in local either comment out below section or
 # use 'Production Database Configuration' with Environment Variables.
+
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
