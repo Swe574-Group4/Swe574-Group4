@@ -394,7 +394,7 @@ def user_activity(request):
 from actions.utils import create_action, delete_action
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 
 
