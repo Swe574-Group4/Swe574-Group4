@@ -11,6 +11,7 @@ from medicles.forms import AnnotationForm
 from medicles.models import Article, Tag, Annotation, FavouriteListTable
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
+from django.core.paginator import Paginator, EmptyPage
 
 
 # Create your views here.
@@ -108,8 +109,20 @@ def search(request):
     articles = Article.objects.annotate(rank=SearchRank(
         search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4).order_by('-rank')
     print("mainsearch")
-    print(articles)
-    return render(request, 'medicles/search_results.html', {'articles': articles})
+
+    paginate = Paginator(articles, 20)
+    print('x',paginate)
+
+    # page_number = request.GET.get('page',1)
+    # paginated_articles = paginate.page(page_number)
+    page_number = request.GET.get('page', 1)
+    paginated_articles = paginate.get_page(page_number)
+    print(paginated_articles)
+
+
+
+    #return render(request, 'medicles/search_results.html', {'articles': articles})
+    return render(request, 'medicles/search_results.html', {'articles': articles, 'paginated_articles': paginated_articles})
 
 
 def detail(request, article_id):
@@ -528,13 +541,14 @@ def favourite_article(request, article_id):
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
+
 def favourite_article_List(request):
-    #get current user and user's favorited articles
+    # get current user and user's favorited articles
     current_user = User.objects.get(pk=request.user.id)
     users_favourite_list = FavouriteListTable.objects.filter(user=current_user)
 
     # retrieve article_id and the article objects from Article table
-    article_id_list=[]
+    article_id_list = []
     for object in users_favourite_list:
         article_id_list.append(object.article_id)
     articles = Article.objects.filter(article_id__in=article_id_list)
