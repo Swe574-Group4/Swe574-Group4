@@ -43,7 +43,7 @@
   </script>
 
   <div style="padding-left:16px">
-    <h1><br><br><br></h1>
+    <h1><br><br></h1>
   </div>
   {% block body_block %}
   {# Outside of here will be extended.#}
@@ -52,6 +52,32 @@
     <input type="text" placeholder="Search.." name="q" class="w3-white w3-button w3-round-xxlarge">
     <button type="submit" class="w3-round-xxlarge"><i class="fa fa-search"></i></button>
   </form>
+
+  <div style="text-align:center;margin: auto;max-width:500px;">
+    
+    <br><br><br>
+    <hr>
+      {% if user.is_authenticated %}
+        {% for activity in activities %}
+          <a href={{ activity.2 }}> {{ activity.1 }} </a>
+
+          {% if activity.0 == 'Follow' %}
+            is following
+          {% elif activity.0 == 'Search' %}
+            searched
+          {% elif activity.0 == 'Favourite' %}
+            favourited
+          {% elif activity.0 == 'Tag' %}
+            tagged
+          {% elif activity.0 == 'Annotate' %}
+            annotated
+          {% endif %}
+
+          <a href={{ activity.4 }}> {{ activity.3 }} </a>
+          <br>
+        {% endfor %}
+      {% endif %}
+  </div>
 
   {% endblock %}
 

@@ -40,8 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'coverage',
-    'django.contrib.sites',
-    'actstream'
+    'django.contrib.sites'
 ]
 
 SITE_ID = 1
