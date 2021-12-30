@@ -157,11 +157,11 @@
     {% endfor %}
 </div>
 
-{{paginated_articles }} <br>
-
 {% if paginated_articles.has_previous %}
 <a href="?q={{search_term}}&page={{paginated_articles.previous_page_number}}">Previous Page</a>
 {% endif %}
+
+{{paginated_articles }}
 
 {% if paginated_articles.has_next %}
 <a href="?q={{search_term}}&page={{paginated_articles.next_page_number}}">Next Page</a>
