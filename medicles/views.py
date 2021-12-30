@@ -117,12 +117,12 @@ def search(request):
     # paginated_articles = paginate.page(page_number)
     page_number = request.GET.get('page', 1)
     paginated_articles = paginate.get_page(page_number)
+
+
     print(paginated_articles)
 
-
-
     #return render(request, 'medicles/search_results.html', {'articles': articles})
-    return render(request, 'medicles/search_results.html', {'articles': articles, 'paginated_articles': paginated_articles})
+    return render(request, 'medicles/search_results.html', {'articles': articles, 'paginated_articles': paginated_articles, 'search_term':search_term})
 
 
 def detail(request, article_id):
