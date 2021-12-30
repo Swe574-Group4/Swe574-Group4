@@ -1,18 +1,32 @@
 import datetime
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramDistance
 from django.db import IntegrityError
-from django.shortcuts import redirect, render, get_object_or_404
+
+from django.shortcuts import redirect, render, get_object_or_404, get_list_or_404
 
 from medicles.forms import AnnotationForm
 from medicles.models import Article, Tag, Annotation, FavouriteListTable
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
 from django.core.paginator import Paginator, EmptyPage
+from collections import Counter
 
+
+from actions.utils import create_action, delete_action
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .models import Contact
+from actions.models import Action
+from django.http import HttpResponseBadRequest
+from django.views.decorators.csrf import csrf_exempt
+import datetime
+from django.utils import timezone
 
 # Create your views here.
 
@@ -95,6 +109,9 @@ def advanced_search(request):
         return render(request, 'medicles/advanced_search.html')
 
 
+from .models import Search
+
+
 def search(request):
     search_term = request.GET.get('q', None)
     if not search_term:
@@ -110,18 +127,23 @@ def search(request):
         search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4).order_by('-rank')
     print("mainsearch")
 
+
     paginate = Paginator(articles, 20)
     print('x',paginate)
 
-    # page_number = request.GET.get('page',1)
-    # paginated_articles = paginate.page(page_number)
     page_number = request.GET.get('page', 1)
     paginated_articles = paginate.get_page(page_number)
 
+    search_obj = Search(user=request.user.id, term=search_term)
+    search_obj.save()
 
-    print(paginated_articles)
+    # now = timezone.now()
+    # last_minute = now - datetime.timedelta(seconds=120)
+    # target_search = Search.objects.get(user=request.user.id, term=search_term, created__gte=last_minute)
+    # create_action(user=request.user, verb='searched', target=target_search)
 
-    #return render(request, 'medicles/search_results.html', {'articles': articles})
+    user_search_activity(request.user, search_term)
+
     return render(request, 'medicles/search_results.html', {'articles': articles, 'paginated_articles': paginated_articles, 'search_term':search_term})
 
 
@@ -139,7 +161,6 @@ def detail(request, article_id):
 
     else:
         alert_flag = False
-
     alreadyFavourited = False
     if FavouriteListTable.objects.filter(article=article).exists():
         if FavouriteListTable.objects.filter(user=request.user.id).exists():
@@ -237,23 +258,48 @@ def add_annotation(request, article_id):
 
         annotation_request_from_browser = ''
         if form.is_valid():
+
+            # Retrieve values for w3c_json_annotation from form data.
+
             article_will_be_updated = Article.objects.get(pk=article_id)  # Gets the article that will be associated
             user_will_be_updated = User.objects.get(pk=request.user.id)  # Gets the user that will be associated
             print(request.user.id)
             annotation_request_from_browser = form.cleaned_data['annotation_key'].split(':')
             print(annotation_request_from_browser)
-            annotation_key = annotation_request_from_browser[0]
-            user_def_annotation_key = form.cleaned_data['user_def_annotation_key']
+            
 
+            annotation_input = annotation_request_from_browser[0]
+            user_def_annotation_key = form.cleaned_data['user_def_annotation_key']
+            startIndex = form.data["annotation_start_index"]
+            endIndex = form.data["annotation_end_index"]
             # If Wikidata tag_key and user defined user_def_tag_key exists. It will create user_def_tag_key.
-            if annotation_key and user_def_annotation_key:
+            if annotation_input and user_def_annotation_key:
                 try:
-                    # tag_value = 'http://www.wikidata.org/wiki/' + annotation_request_from_browser[2]
-                    # tag = Tag(tag_key = form.cleaned_data['tag_key'],
-                    #         tag_value = form.cleaned_data['tag_value']
-                    #         )
+                    # Web Annotation Data Model - Text Position Selector JSON-LD Implementation
+                    w3c_jsonld_annotation = {
+                        "@context": "http://www.w3.org/ns/anno.jsonld",
+                        "id": f'http://localhost:8000/article/{article_id}',
+                        "type": "Annotation",
+                        "body": {
+                            "type": "TextualBody",
+                            "purpose": "Tagging",
+                            "value": annotation_input
+                        },
+                        "target": {
+                            "source": user_def_annotation_key,
+                            "selector": {
+                                "type": "TextPositionSelector",
+                                "start": startIndex,
+                                "end": endIndex
+                            }
+                        },
+                        "created": str(datetime.datetime.now().date())
+                    }
+
+                    print(w3c_jsonld_annotation)
                     annotation = Annotation(annotation_key=user_def_annotation_key,
-                                            annotation_value=annotation_key
+                                            annotation_value=annotation_input,
+                                            annotation_json=w3c_jsonld_annotation
                                             )
                     annotation.save()
                     annotation.article.add(article_will_be_updated)
@@ -302,7 +348,15 @@ def signup(request):
 def profile(request, user_id):
     user = get_object_or_404(User, pk=user_id)
 
-    return render(request, 'medicles/profile.html', {'user': user})
+    tags = get_list_or_404(Tag, user=user_id)
+    tagKeys = []
+    for tag in tags:
+        tagKeys.append(tag.tag_key)
+
+    c = Counter(tagKeys)
+    mostPopularTags = c.most_common(3)
+
+    return render(request, 'medicles/profile.html', {'user': user, 'tags': tags, 'mostPopularTags': mostPopularTags})
 
 
 def user_search(request):
@@ -321,13 +375,40 @@ def user_search_results(request):
     return render(request, 'medicles/user_search_results.html', {'users': users})
 
 
+# User Activity View
+def user_activity(request):
+    user_from = request.user.id
+    all_actions = Action.objects.filter(user_id=user_from)
+    detailed_actions = []
+    for action in all_actions:
+        if action.verb == 'is following':
+            subject_user = User.objects.filter(id=user_from)
+
+            print(subject_user.all)
+            target_user = User.objects.filter(id=action.target_id)
+            detailed_actions.append(
+                [subject_user[0], subject_user[0].first_name + ' ' + subject_user[0].last_name, action.verb,
+                 target_user[0].first_name + ' ' + target_user[0].last_name])
+        if action.verb == 'searched':
+            subject_user = User.objects.filter(id=user_from)
+
+            print(subject_user.all)
+            target_term = Search.objects.filter(id=action.target_id)
+            detailed_actions.append(
+                [subject_user[0], subject_user[0].first_name + ' ' + subject_user[0].last_name, action.verb,
+                 target_term[0].term])
+
+    return render(request, 'medicles/user_activity.html', {'detailed_actions': detailed_actions})
+
+
 from actions.utils import create_action, delete_action
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 
 
+# Custom AJAX required decorator
 def ajax_required(f):
     """
     AJAX request required decorator
@@ -541,7 +622,6 @@ def favourite_article(request, article_id):
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
-
 def favourite_article_List(request):
     # get current user and user's favorited articles
     current_user = User.objects.get(pk=request.user.id)
@@ -555,3 +635,4 @@ def favourite_article_List(request):
     print(articles)
 
     return render(request, 'medicles/favourites.html', {'articles': articles})
+
