@@ -42,4 +42,7 @@ urlpatterns = [
     path('useractivity/', views.user_activity, name='user_activity'),
 
     path('favouriteArticle/<int:article_id>/', views.favourite_article, name='favourite_article'),
+
+    path('favourites/', views.favourite_article_List, name='favourite_article_List'),
+
 ]

@@ -125,6 +125,7 @@ def search(request):
     articles = Article.objects.annotate(rank=SearchRank(
         search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4).order_by('-rank')
     print("mainsearch")
+
     search_obj = Search(user=request.user.id, term=search_term)
     search_obj.save()
 
@@ -558,6 +559,7 @@ def get_target_search_name(id):
     print('Search object: ', search_obj)
     return search_obj[0].term
 
+
 # Gets target article url used in activity json
 def get_target_article_url(id):
     return home_url + "/article/" + str(id)
@@ -622,6 +624,21 @@ def favourite_article(request, article_id):
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
+def favourite_article_List(request):
+    #get current user and user's favorited articles
+    current_user = User.objects.get(pk=request.user.id)
+    users_favourite_list = FavouriteListTable.objects.filter(user=current_user)
+
+    # retrieve article_id and the article objects from Article table
+    article_id_list=[]
+    for object in users_favourite_list:
+        article_id_list.append(object.article_id)
+    articles = Article.objects.filter(article_id__in=article_id_list)
+    print(articles)
+
+    return render(request, 'medicles/favourites.html', {'articles': articles})
+
+
 def getUsersFromTagId(tags) -> list[User]:
     userTags = getUsersWithQuery(tags)
 
@@ -649,3 +666,4 @@ def getUsersWithQuery(tags) -> list[int]:
         userTags.append(result[0])
 
     return userTags
+
