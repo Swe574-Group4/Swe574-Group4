@@ -632,7 +632,6 @@ def favourite_article_List(request):
     for object in users_favourite_list:
         article_id_list.append(object.article_id)
     articles = Article.objects.filter(article_id__in=article_id_list)
-    print(articles)
 
     return render(request, 'medicles/favourites.html', {'articles': articles})
 
