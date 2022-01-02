@@ -15,7 +15,9 @@ from medicles.forms import AnnotationForm
 from medicles.models import Article, Tag, Annotation, FavouriteListTable
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
+from django.core.paginator import Paginator, EmptyPage
 from collections import Counter
+
 
 from actions.utils import create_action, delete_action
 from django.http import JsonResponse
@@ -126,6 +128,12 @@ def search(request):
         search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4).order_by('-rank')
     print("mainsearch")
 
+    paginate = Paginator(articles, 20)
+    print('x',paginate)
+
+    page_number = request.GET.get('page', 1)
+    paginated_articles = paginate.get_page(page_number)
+
     search_obj = Search(user=request.user.id, term=search_term)
     search_obj.save()
 
@@ -136,7 +144,7 @@ def search(request):
 
     user_search_activity(request.user, search_term)
 
-    return render(request, 'medicles/search_results.html', {'articles': articles})
+    return render(request, 'medicles/search_results.html', {'articles': articles, 'paginated_articles': paginated_articles, 'search_term':search_term})
 
 
 def detail(request, article_id):
@@ -623,7 +631,6 @@ def favourite_article(request, article_id):
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
-
 def favourite_article_List(request):
     #get current user and user's favorited articles
     current_user = User.objects.get(pk=request.user.id)
@@ -634,7 +641,6 @@ def favourite_article_List(request):
     for object in users_favourite_list:
         article_id_list.append(object.article_id)
     articles = Article.objects.filter(article_id__in=article_id_list)
-    print(articles)
 
     return render(request, 'medicles/favourites.html', {'articles': articles})
 
@@ -666,4 +672,3 @@ def getUsersWithQuery(tags) -> list[int]:
         userTags.append(result[0])
 
     return userTags
-
