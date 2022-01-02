@@ -450,7 +450,7 @@ def ajax_required(f):
 
 
 # Used in W3C_JSON variable in activity functions
-home_url = "http://medicles.com"
+home_url = "http://localhost:8000"
 
 
 @csrf_exempt
@@ -541,7 +541,7 @@ def user_search_activity(user, search_term):
     target_object_name = get_target_search_name(target_search.id)
 
     # Activity Streams 2.0 JSON-LD Implementation
-    w3c_json = {
+    w3c_json = json.dumps({
         "@context": "https://www.w3.org/ns/activitystreams",
         "summary": "{} searched {}".format(actor_fullname, target_object_name),
         "type": "Search",
@@ -558,8 +558,9 @@ def user_search_activity(user, search_term):
             "url": target_object_url,
             "name": target_object_name,
         }
-    }
+    })
     print(w3c_json)
+
 
     # Create action for search term for a specific user
     create_action(user=user, verb=3, activity_json=w3c_json, target=target_search)
@@ -628,7 +629,7 @@ def favourite_article(request, article_id):
         favourite.delete()
 
         # Delete action for favorite article by specific user
-        delete_action(user=user_updated, verb=3, target=article)
+        delete_action(user=user_updated, verb=4, target=article)
 
     # save and link user and article id in database
     else:
@@ -636,6 +637,6 @@ def favourite_article(request, article_id):
         favourite.save()
 
         # Create action for favorite article by specific user
-        create_action(user=user_updated, verb=3, activity_json=w3c_json, target=article)
+        create_action(user=user_updated, verb=4, activity_json=w3c_json, target=article)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
