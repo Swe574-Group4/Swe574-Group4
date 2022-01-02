@@ -197,8 +197,10 @@
 <script type="text/javascript">
     $(this).click(function(e){
         var target = (event.target.id);
+        //window.location.href = event.target
         //alert(target);
-        
+        //alert($(event.target).attr('class'))
+        if ( $(e.target).is(":button") ) {
         e.preventDefault();
         $.post('{% url "medicles:user_follow" %}',
             {
@@ -214,9 +216,15 @@
                     $('#'+target).data('action', previous_action == 'follow' ? 'unfollow' : 'follow');
                     // toggle link text
                     $('#'+target).text(previous_action == 'follow' ? 'Unfollow' : 'Follow');
-}
+            }
         });
-    });
+    } else {
+        //alert(event.target)
+        // This helps to redirect href locations
+        window.location.href = event.target
+    }
+    
+});
 
 </script>
 

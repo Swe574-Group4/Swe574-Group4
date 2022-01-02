@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('medicles', '0008_contact'),
+        ('medicles', '0009_favouritelisttable'),
     ]
 
     operations = [
