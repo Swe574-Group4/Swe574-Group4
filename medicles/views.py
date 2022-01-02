@@ -2,6 +2,7 @@ import datetime
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 
+import psycopg2
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -257,7 +258,7 @@ def add_annotation(request, article_id):
             print(request.user.id)
             annotation_request_from_browser = form.cleaned_data['annotation_key'].split(':')
             print(annotation_request_from_browser)
-            
+
 
             annotation_input = annotation_request_from_browser[0]
             user_def_annotation_key = form.cleaned_data['user_def_annotation_key']
@@ -337,7 +338,9 @@ def signup(request):
 
 
 def profile(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
+    user = User.objects.get(pk=user_id)
+    followerCount= 0
+    followingCount= 0
 
     tags = get_list_or_404(Tag, user=user_id)
     tagKeys = []
@@ -347,7 +350,7 @@ def profile(request, user_id):
     c = Counter(tagKeys)
     mostPopularTags = c.most_common(3)
 
-    return render(request, 'medicles/profile.html', {'user': user, 'tags': tags, 'mostPopularTags': mostPopularTags})
+    return render(request, 'medicles/profile.html', {'user': user, 'tags': tags, 'mostPopularTags': mostPopularTags,'followerCount': followerCount,'followingCount': followingCount})
 
 
 def user_search(request):
@@ -356,14 +359,21 @@ def user_search(request):
 
 def user_search_results(request):
     search_term = request.GET.get('name', None)
-    if not search_term:
+    search_term_tag = request.GET.get('tags', None)
+    if not search_term and search_term_tag:
         render(request, 'medicles/user_search.html')
     search_vector = SearchVector('username', weight='A') + SearchVector('first_name', weight='B') + SearchVector(
         'last_name', weight='B')
+    search_vector_tag = SearchVector('tag_key', weight='A')
     search_term_updated = SearchQuery(search_term, search_type='websearch')
+    search_term_updated_tag = SearchQuery(search_term_tag, search_type='websearch')
     users = User.objects.annotate(rank=SearchRank(search_vector, search_term_updated, cover_density=True)).filter(
         rank__gte=0.4).order_by('-rank')
-    return render(request, 'medicles/user_search_results.html', {'users': users})
+    tags = Tag.objects.annotate(rank=SearchRank(search_vector_tag, search_term_updated_tag, cover_density=True)).filter(
+        rank__gte=0.4).order_by('-rank')
+    taggedUsers = getUsersFromTagId(tags)
+
+    return render(request, 'medicles/user_search_results.html', {'users': users, 'taggedUsers': taggedUsers})
 
 
 # User Activity View
@@ -395,7 +405,7 @@ def user_activity(request):
 from actions.utils import create_action, delete_action
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -613,6 +623,7 @@ def favourite_article(request, article_id):
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
+
 def favourite_article_List(request):
     #get current user and user's favorited articles
     current_user = User.objects.get(pk=request.user.id)
@@ -626,3 +637,33 @@ def favourite_article_List(request):
     print(articles)
 
     return render(request, 'medicles/favourites.html', {'articles': articles})
+
+
+def getUsersFromTagId(tags) -> list[User]:
+    userTags = getUsersWithQuery(tags)
+
+    userList = [User]
+    for userTag in userTags:
+        user = get_object_or_404(User, id=userTag)
+        userList.append(user)
+
+    return userList
+
+
+def getUsersWithQuery(tags) -> list[int]:
+    userTags = []
+    conn = psycopg2.connect(
+        host="localhost",
+        database="medicles",
+        user="postgres",
+        password="postgres"
+    )
+    cur = conn.cursor()
+    sql = 'select user_id from medicles_tag_user where id = %s;'
+    for tag1 in tags:
+        cur.execute(sql, (tag1.id,))
+        result = cur.fetchone()
+        userTags.append(result[0])
+
+    return userTags
+
