@@ -32,32 +32,34 @@ from django.core import serializers
 
 def index(request):
     # context = "Welcome to medicles!"
-    action_users = Action.objects.filter(target_id=request.user.id, verb=1)
-    print("User Last Login:", request.user.last_login)
-    actor_user_last_login = request.user.last_login.replace(tzinfo=None)
     activities = []
-    for user in action_users:
-        user_actions = Action.objects.filter(user_id=user.user_id)
-        for action in user_actions:
-            print(action.action_json)
-        #deserialized = serializers.deserialize('json', user.action_json)
-            print(json.loads(action.action_json)['published'])
-            last_action = json.loads(action.action_json)
-            published_date = last_action['published']
-            activity_published_date = datetime.datetime.strptime(published_date[:-7], '%Y-%m-%dT%H:%M:%S')
-            if activity_published_date < actor_user_last_login:
-                action_type = last_action['type']
-                action_actor_name= last_action['actor']['name']
-                action_actor_url = last_action['actor']['url']
-                action_object_name = last_action['object']['name']
-                action_object_url = last_action['object']['url']
-                activities.append([ action_type,
-                                    action_actor_name,
-                                    action_actor_url,
-                                    action_object_name,
-                                    action_object_url
-                                    ])
-                print("Date is ", True)
+    if not request.user.is_anonymous:
+        action_users = Action.objects.filter(target_id=request.user.id, verb=1)
+        print("User Last Login:", request.user.last_login)
+        actor_user_last_login = request.user.last_login.replace(tzinfo=None)
+        
+        for user in action_users:
+            user_actions = Action.objects.filter(user_id=user.user_id)
+            for action in user_actions:
+                print(action.action_json)
+            #deserialized = serializers.deserialize('json', user.action_json)
+                print(json.loads(action.action_json)['published'])
+                last_action = json.loads(action.action_json)
+                published_date = last_action['published']
+                activity_published_date = datetime.datetime.strptime(published_date[:-7], '%Y-%m-%dT%H:%M:%S')
+                if activity_published_date < actor_user_last_login:
+                    action_type = last_action['type']
+                    action_actor_name= last_action['actor']['name']
+                    action_actor_url = last_action['actor']['url']
+                    action_object_name = last_action['object']['name']
+                    action_object_url = last_action['object']['url']
+                    activities.append([ action_type,
+                                        action_actor_name,
+                                        action_actor_url,
+                                        action_object_name,
+                                        action_object_url
+                                        ])
+                    print("Date is ", True)
     return render(request, 'medicles/index.html', {'activities': activities})
 
 
@@ -598,7 +600,7 @@ def favourite_article(request, article_id):
     target_object_name = article.article_title
 
     # Activity Streams 2.0 JSON-LD Implementation
-    w3c_json = {
+    w3c_json = json.dumps({
         "@context": "https://www.w3.org/ns/activitystreams",
         "summary": "{} favorited {}".format(actor_fullname, target_object_name),
         "type": "Favourite",
@@ -615,7 +617,7 @@ def favourite_article(request, article_id):
             "url": target_object_url,
             "name": target_object_name,
         }
-    }
+    })
     print(w3c_json)
 
     # remove user and article id info from favouriteListTable in database
