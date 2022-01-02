@@ -41,4 +41,6 @@ urlpatterns = [
     # User Activity
     path('useractivity/', views.user_activity, name='user_activity'),
 
+    path('loadAnnotation/', views.ajax_load_annotation, name='ajax_load_annotation'),
+
 ]

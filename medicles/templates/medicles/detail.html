@@ -113,15 +113,41 @@
         }
 
         .float-child {
+            border-radius: 8px;
             width: 50%;
             float: left;
             padding: 20px;
             border: 1px solid black;
         }
 
+
+        #footer {
+            height: 30px;
+            margin: 0;
+            clear: both;
+            width: 100%;
+            position: relative;
+        }
+
+        .row {
+            border-radius: 8px;
+            width: 100%;
+            background: antiquewhite;
+            text-align: center;
+        }
+
+
+        .col {
+            display: inline-block;
+            border: 1px solid red;
+            padding: 1rem 1rem;
+            vertical-align: middle;
+        }
+
     </style>
 </head>
-<body>
+
+<body onload="getPreviousAnnotations()">
 
 <div class="topnav" id="myTopnav">
     <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
@@ -142,38 +168,78 @@
     </a>
 </div>
 
-<div class="w3-margin">
-    <h2 class="w3-container">Specific Article</h2>
+<div class="float-container">
 
-    <div class="w3-container">
+    <div class="float-child" id="article-division" style="width:fit-content">
+        <h2 class="w3-container">Specific Article</h2>
 
-        <h3 class="w3-text-teal"><a href="{% url 'medicles:detail' article.article_id %}">{{ article.article_title }}
-        </h3>
-        <h6><a class="w3-text-gray"><strong>PMID</strong>: {{ article.article_id }} <strong>Publish
-            Date: </strong>: {{ article.pub_date }}</a></h6>
-        <h6><a class="w3-text-gray"><strong>Author List</strong>: {{ article.author_list }}</a></h6>
-        <p id="articleAbstract">{{ article.article_abstract }}</p>
-        <p><strong>Tags:</strong>
-            {% for tag_obj in article.tag_set.all %}
-                <span><a href="{{ tag_obj.tag_value }}"
-                         class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }} </a></span>
-            {% endfor %}
-        </p>
-        <!–– {{ annotation_obj.annotation_json }} for retrieving Json data ––>
-        <p><strong>Annotations:</strong>
-            {% for annotation_obj in article.annotation_set.all %}
-                <span><a href="{{ annotation_obj.annotation_value }}"
-                         class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">
-                    {{ annotation_obj.annotation_key }}-{{ annotation_obj.annotation_value }}</a></span>
-            {% endfor %}
-        </p>
+        <div class="w3-container">
+
+            <h3 class="w3-text-teal"><a
+                    href="{% url 'medicles:detail' article.article_id %}"></a>{{ article.article_title }}
+            </h3>
+            <h6><a class="w3-text-gray"><strong>PMID</strong>: <span id="articleIDSpan">{{ article.article_id }}</span>
+                <strong>Publish
+                    Date: </strong>: {{ article.pub_date }}</a></h6>
+            <h6><a class="w3-text-gray"><strong>Author List</strong>: {{ article.author_list }}</a></h6>
+            <blockquote id="articleAbstract">{{ article.article_abstract }}</blockquote>
+            <p><strong>Tags:</strong>
+                {% for tag_obj in article.tag_set.all %}
+                    <span><a href="{{ tag_obj.tag_value }}"
+                             class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }} </a></span>
+                {% endfor %}
+            </p>
+
+        </div>
     </div>
-</div>
+
+    <div class="float-child" id="annotationInfo-division" hidden="true"
+         style="height: 600px; width: 360px; border: none; margin-left: 15px">
+
+        <!-- Annotation List-->
+
+        <div hidden id="annotation_input_box" class="row" style="overflow-y: scroll; height:600px;">
+            <h6 class="w3-text-teal"> Annotations </h6>
+
+            <h6 class="w3-text-teal" id="annotation_input_value_for_list"
+                style="padding-right: 10px; font-size: 85%; text-align: start">Row </h6>
+        </div>
+
+        <!-- Annotation Individual Value-->
+
+        <div class="row" style="height: 400px">
+            <h6 class="w3-text-teal" style="padding-top: 8px"><b> Annotation Text </b></h6>
+            <h6 id="annotation_input_value">Row </h6>
+        </div>
+
+        <div class="row" style="height: 60px; margin-top: 7px">
+            <h6 class="w3-text-teal" style="display: inline-block;vertical-align: middle;"><b>
+                AnnotationDate:</b></h6>
+            <h6 id="annotation_date_value" style="display: inline-block;vertical-align: middle;">
+                Row </h6>
+        </div>
+
+        <div class="row" style="height: 60px; margin-top: 7px; margin-bottom: 10px">
+            <h6 class="w3-text-teal" style="display: inline-block;vertical-align: middle;"><b>
+                Created By: </b></h6>
+            <h6 id="annotation_creator_value" style="display: inline-block;vertical-align: middle;">
+                Row </h6>
+        </div>
+
+        <a href="javascript:void(0);" class="w3-text-teal" onclick="dismissAnnotationValuesBox()">
+            <div style="text-align: center;">Dismiss</div>
+        </a>
+
+    </div>
+
+</body>
 
 {% if user.is_authenticated %}
-    <div class="float-container">
 
-        <div class="float-child" id="tag-division">
+    <div class="float-container" id="footer">
+
+        <div class="float-child" id="tag-division"
+             style="height: 400px; border-bottom-left-radius: 5px;  border-top-left-radius: 5px;">
             <div class="w3-container w3-container-teal  w3-margin-left">
                 <h4 id="tagHeader" title="Tag me" class="w3-text-teal w3-left w3-text-opacity">Tag the article either
                     using Wikidata
@@ -187,13 +253,13 @@
                     <input type="text" placeholder="Enter tag name or leave it empty for Wikidata tags.."
                            name="user_def_tag_key" id="id_user_def_tag_key"
                            class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                           style="width:60%">
+                           style="width:60%; border-radius: 8px">
 
                     <br><br>
                     <label for="tag_key"><b></b></label>
                     <input type="text" placeholder="Search tag from Wikidata.." name="tag_key" id="id_tag_key"
                            class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                           style="width:60%">
+                           style="width:60%; border-radius: 8px">
                     <br><br>
                     <input type="submit" value="Add Tag" id="tagBT" class="w3-teal w3-button w3-round-xxlarge"
                            style="width:22%">
@@ -205,7 +271,8 @@
             </form>
         </div>
 
-        <div class="float-child" id="annotate-division">
+        <div class="float-child" id="annotate-division"
+             style="height: 400px ; border-bottom-right-radius: 5px;  border-top-right-radius: 5px;">
             <div class="w3-container w3-container-teal  w3-margin-left">
                 <h4 id="tagHeader" title="Tag me" class="w3-text-teal w3-left w3-text-opacity">
                     Annotate the highlighted section </h4>
@@ -215,38 +282,41 @@
                 <div class="w3-margin-left w3-padding-24">
 
                     <input type="text" placeholder="Text to be annotated"
+                           readonly
                            name="user_def_annotation_key" id="textToBeAnnotated"
                            class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                           style="width:40%">
+                           style="width:40%; border-radius: 8px">
 
-                    <a href="javascript:void(0);" class="icon" onclick="cancelAnnotation()">
+                    <a href="javascript:void(0);" class="icon w3-text-teal" style="margin-left: 30px"
+                       onclick="cancelAnnotationProcess()">
                         Cancel Annotation
                     </a>
 
                     <br><br>
                     <label for="annotation_key"><b></b></label>
-                    <input type="text" placeholder="Annotation"
-                           disabled
-                           name="annotation_key" id="annotationField"
-                           class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                           style="width:60%">
+                    <textarea
+                            class=" w3-border-teal"
+                            style="border-radius: 8px; width: 100%; padding: 7px"
+                            disabled
+                            id="annotationField"
+                            name="annotation_key"
+                            placeholder="Annotation" cols="40" rows="5"></textarea>
+
                     <br><br>
 
                     <input type="submit" value="Add Annotation" id="annotationBT"
-                           class="w3-teal w3-button w3-round-xxlarge" style="width:22%">
+                           class="w3-teal w3-button w3-round-xxlarge" style="width:22%" disabled>
 
-                    <label for="annotation_indices"><b></b></label>
-                    <input type="hidden"
-                           name="annotation_start_index" id="annotationStartIndex"
-                           class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                           style="width:60%">
+                    <label  for="annotation_indices"><b></b></label>
+                    <input name="annotation_start_index" id="annotationStartIndex" hidden
+                            class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
+                            style="width:60%">
                     <br><br>
 
-                    <label for="annotation_indices"><b></b></label>
-                    <input type="hidden"
-                           name="annotation_end_index" id="annotationEndIndex"
-                           class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                           style="width:60%">
+                    <label  for="annotation_indices"><b></b></label>
+                    <input name="annotation_end_index" hidden id="annotationEndIndex"
+                            class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
+                            style="width:60%">
                     <br><br>
 
 
@@ -266,30 +336,224 @@
 
 <script type="text/javascript">
 
-    document.getElementById('annotationField').style.height = "80px";
+    let annotationList = []
+    let annotationItemToBeShownInDialog = ""
+    const articleId = document.getElementById("articleIDSpan").textContent;
 
-    var t = '';
+    <!-- Get previous annotations-->
 
-    function gText(e) {
-        t = (document.all) ? document.selection.createRange().text : document.getSelection();
-        if (t.toString().length !== 0) {
-            document.getElementById("textToBeAnnotated").value = t
-            document.getElementById("annotationField").disabled = false;
-            document.getElementById("id_tag_key").disabled = true
-            document.getElementById("id_user_def_tag_key").disabled = true
-            document.getElementById("tagBT").disabled = true
-            document.getElementById("annotationStartIndex").value = t.anchorOffset
-            document.getElementById("annotationEndIndex").value = t.focusOffset
+    function getPreviousAnnotations() {
+        $.ajax({
+            url: "{% url 'medicles:ajax_load_annotation' %}",
+            data: {},
+            dataType: 'json',
+            success: function (annotationData) {
+                console.log(annotationData);
+                annotationList = []
+                for (let i = 0; i < annotationData.length; i++) {
+                    let item = annotationData[i]
+                    if (item.id.includes(articleId)) {
+                        annotationList.push(item)
+                    }
+                }
+                highlightAnnotatedPart()
+            }
+        });
+    }
+
+
+    <!-- Show previous annotations on page-->
+
+    function highlightAnnotatedPart() {
+
+        let articleAbstractWholeText = document.getElementById("articleAbstract").textContent.trim()
+        let textTokenArray = articleAbstractWholeText.split(' ');
+        let textTokenPositionArray = []
+
+        for (let i = 0; i < textTokenArray.length; i++) {
+            let start = 0
+            if (i !== 0) {
+                start = textTokenPositionArray[i - 1][1] + 1
+            }
+            let end = textTokenArray[i].length + start
+            let position_array = [start, end]
+            textTokenPositionArray.push(position_array)
+        }
+
+
+        if (annotationList.length !== 0) {
+
+            let annotatedTokenIndices = []
+
+            for (let i = 0; i < annotationList.length; i++) {
+                let indicesForCurrentAnnotation = findAnnotatedTokenIndices(annotationList[i], textTokenPositionArray, textTokenArray)
+                annotatedTokenIndices.push(indicesForCurrentAnnotation)
+            }
+
+            console.log(annotatedTokenIndices)
+
+            let annotatedAbstract = "";
+            for (let i = 0; i < textTokenArray.length; i++) {
+                let isAnnotatedTokenIndex = false;
+                for (let outer of annotatedTokenIndices) {
+                    if (outer.includes(i)) {
+
+                        for (let anotherList of annotatedTokenIndices) {
+                            if (outer[1] < anotherList[1] && outer[1] >= anotherList[1]) {
+                                console.log("çakışma")
+                            }
+                        }
+
+                        let currentBeAnnotatedText = "";
+                        for (let inner of outer) {
+                            currentBeAnnotatedText += textTokenArray[inner] + " ";
+                        }
+                        annotatedAbstract += "<span style='background: yellow' onclick='showAnnotationValuesBox()'>" + currentBeAnnotatedText + "</span>" + " ";
+                        i = outer[outer.length - 1];
+                        isAnnotatedTokenIndex = true;
+                        break;
+                    }
+                }
+
+                if (!isAnnotatedTokenIndex) {
+                    annotatedAbstract += textTokenArray[i] + " "
+                }
+            }
+
+            document.getElementById("articleAbstract").innerHTML = annotatedAbstract
+
+
         }
     }
 
-    document.onmouseup = gText;
+    function findAnnotatedTokenIndices(currentAnnotation, textTokenPositionArray, textTokenArray) {
 
-    if (!document.all) {
-        document.captureEvents(Event.MOUSEUP);
+        let indicesList = []
+        let annotationStart = currentAnnotation.target.selector.start
+        let annotationEnd = currentAnnotation.target.selector.end
+
+        for (let j = 0; j < textTokenPositionArray.length; j++) {
+            let tempIndexStart = textTokenPositionArray[j][0]
+            let tempIndexEnd = textTokenPositionArray[j][1]
+
+
+            if (annotationStart <= tempIndexStart && (parseInt(annotationEnd) + 1) >= tempIndexEnd) {
+                indicesList.push(j)
+            }
+        }
+
+        return indicesList
     }
 
-    function cancelAnnotation() {
+    <!-- Show previous annotation details-->
+
+    function showAnnotationValuesBox() {
+
+        console.log(annotationItemToBeShownInDialog)
+
+        document.getElementById("annotationInfo-division").hidden = false
+        document.getElementById("article-division").setAttribute("style", "width:1000px")
+
+
+        // for showing individual annotation
+
+        for (let item of annotationList) {
+            if (item.target.text.trim() === annotationItemToBeShownInDialog.trim()) {
+                let annotatedText = "Annotated Text: " + item.target.text
+                $('#annotation_input_value').text(item.body.value);
+                $('#annotation_creator_value').text(item.creator.name);
+                $('#annotation_date_value').text(item.created);
+                document.getElementById("annotation_creator_value").href = "http://localhost:8000/profile/" + item.creator.id;
+                break;
+            }
+        }
+
+
+        // for showing whole annotations
+        /*
+        let annotationListItemsToShow = []
+
+        for (let item of annotationList) {
+            let annotatedText = "<b style='color: #0b7dda'>Annotated Text: </b>" + item.target.text
+            let annotationValue = "<b style='color: #0b7dda'>Annotated Value: </b>" + item.body.value
+            let annotationDateAndCreator = "<b style='color: #0b7dda'>Creation Date: </b>" + item.created + "<br>" + " <b style='color: #0b7dda'>Created By:</b> " +  item.creator.name
+            let itemVal = annotatedText + "<br>" + annotationValue + "<br>" + annotationDateAndCreator
+            itemVal += "<br>"
+            annotationListItemsToShow.push(itemVal)
+        }
+
+        //document.getElementById("annotation_creator_value").href = "http://localhost:8000/profile/" +item.creator.id;
+
+        $('#annotation_input_value').text(" ");
+
+        $('#annotation_input_value').append("<ul></ul>");
+        for (var i in annotationListItemsToShow) {
+            var li = "<li>";
+            $("ul").append(li.concat(annotationListItemsToShow[i]))
+        }
+
+         */
+    }
+
+    function dismissAnnotationValuesBox() {
+        //$("ul").empty();
+        document.getElementById("annotationInfo-division").hidden = true
+        document.getElementById("article-division").setAttribute("style", "width:fit-content");
+    }
+
+
+    <!-- Highlight text for annotation-->
+
+    document.getElementById('articleAbstract').addEventListener('mouseup', function (e) {
+        var txt = this.innerText;
+        var selection = window.getSelection();
+        var start = selection.anchorOffset;
+        var end = selection.focusOffset;
+
+        console.log(txt.indexOf(selection.focusNode.data))
+
+        annotationItemToBeShownInDialog = selection.anchorNode.wholeText
+
+        var conflictedAnnotation = false
+        let offsetToStart = 0
+
+        for (let annotationText of annotationList) {
+            if (annotationText.target.text.trim() === selection.focusNode.data.trim()) {
+                conflictedAnnotation = true
+            }
+        }
+        if (conflictedAnnotation) {
+
+            let start = parseInt(txt.trim().indexOf(selection.focusNode.data.trim())) + parseInt(selection.extentOffset) - 1
+            document.getElementById("annotationStartIndex").value = start
+            document.getElementById("annotationEndIndex").value = start + selection.toString().length
+        } else {
+            if (start > end) {
+                let temp = start
+                start = end
+                end = temp
+            }
+            offsetToStart = txt.trim().indexOf(selection.focusNode.data.trim()) - 1
+            document.getElementById("annotationStartIndex").value = start + parseInt(offsetToStart)
+            document.getElementById("annotationEndIndex").value = end + parseInt(offsetToStart)
+        }
+
+
+        document.getElementById("textToBeAnnotated").value = selection.toString()
+        document.getElementById("annotationField").disabled = false;
+        document.getElementById("id_tag_key").disabled = true
+        document.getElementById("id_user_def_tag_key").disabled = true
+        document.getElementById("tagBT").disabled = true
+
+
+        document.getElementById("annotationBT").disabled = false
+
+    });
+
+
+    <!-- Cancel text for annotation-->
+
+    function cancelAnnotationProcess() {
 
         if (window.getSelection) {
             if (window.getSelection().empty) {  // Chrome
@@ -307,7 +571,11 @@
         document.getElementById("id_tag_key").disabled = false
         document.getElementById("id_user_def_tag_key").disabled = false
         document.getElementById("tagBT").disabled = false
+        document.getElementById("annotationBT").disabled = true
     }
+
+
+    <!-- Get previous tag values-->
 
     jQuery(function () {
         $("#id_tag_key").on('keyup', function () {
@@ -327,12 +595,14 @@
                 }
             });
         });
-
-
     });
+
+
 </script>
 
 
 {% if alert_flag %}
     <script>alert("Tag exists. Please specify another tag name.")</script>
 {% endif %}
+
+

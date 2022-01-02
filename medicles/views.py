@@ -1,6 +1,7 @@
 import datetime
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+import hashlib
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
@@ -9,10 +10,13 @@ from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.db import IntegrityError
 from django.shortcuts import redirect, render, get_object_or_404
 
+from annotations.models import AnnotationModel
+from annotations.utils import save_annotation_json
 from medicles.forms import AnnotationForm
 from medicles.models import Article, Tag, Annotation
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
+from django.core import serializers
 
 from actions.utils import create_action, delete_action
 from django.http import JsonResponse
@@ -239,7 +243,6 @@ def add_annotation(request, article_id):
     alert_flag = False
     if request.method == 'POST':
         form = AnnotationForm(request.POST)
-
         annotation_request_from_browser = ''
         if form.is_valid():
             # Retrieve values for w3c_json_annotation from form data.
@@ -262,28 +265,38 @@ def add_annotation(request, article_id):
                         "type": "Annotation",
                         "body": {
                             "type": "TextualBody",
-                            "purpose": "Tagging",
-                            "value": annotation_input
+                            "purpose": "tagging",
+                            "value": annotation_input,
+                            "format": "text/plain"
                         },
                         "target": {
-                            "source": user_def_annotation_key,
+                            "source": f'http://localhost:8000/article/{article_id}',
                             "selector": {
                                 "type": "TextPositionSelector",
                                 "start": startIndex,
                                 "end": endIndex
-                            }
+                            },
+                            "text": user_def_annotation_key
+                        },
+                        "creator": {
+                            "id": request.user.id,
+                            "type": "Person",
+                            "name": str(request.user),
+                            "nickname": "pseudo",
+                            "email_sha1": request.user.email
                         },
                         "created": str(datetime.datetime.now().date())
                     }
+                    save_annotation_json(w3c_jsonld_annotation, article_id)
 
                     print(w3c_jsonld_annotation)
-                    annotation = Annotation(annotation_key=user_def_annotation_key,
-                                            annotation_value=annotation_input,
-                                            annotation_json=w3c_jsonld_annotation
-                                            )
-                    annotation.save()
-                    annotation.article.add(article_will_be_updated)
-                    annotation.user.add(user_will_be_updated)
+                    # annotation = Annotation(annotation_key=user_def_annotation_key,
+                    #                       annotation_value=annotation_input,
+                    #                      annotation_json=w3c_jsonld_annotation
+                    #                       )
+                    # annotation.save()
+                    # annotation.article.add(article_will_be_updated)
+                    # annotation.user.add(user_will_be_updated)
                 except IntegrityError:
                     alert_flag = True
                     # return HttpResponseRedirect('medicles:index')
@@ -530,3 +543,14 @@ def get_target_search_name(id):
     print('Search object: ', search_obj)
     return search_obj[0].term
 
+
+def ajax_load_annotation(request):
+    if request.is_ajax():
+        articleId = request.GET.get("articleId")
+        objects_filter = AnnotationModel.objects.all()
+
+    results = []
+    for obj in objects_filter:
+        results.append(obj.annotation_json)
+
+    return JsonResponse(results, safe=False)

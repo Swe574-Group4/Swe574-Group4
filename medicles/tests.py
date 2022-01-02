@@ -5,15 +5,17 @@ from .models import Article, Tag
 from medicles import services
 import datetime
 from django.urls import reverse
+
+
 # Create your tests here.
 
 class ViewTests(TestCase):
-    
+
     # Test Index Page
     def test_index_page_accessed_successfully(self):
         c = Client()
         response = c.get('/')
-        self.assertEqual(response.status_code, 200 )
+        self.assertEqual(response.status_code, 200)
 
     # Test Search Page
     def test_search_page_accessed_successfully(self):
@@ -35,8 +37,8 @@ class ViewTests(TestCase):
         url = '/search/'
         data = {'q': 'covid'}
         response = c.get(url, data)
-        #print('myResponse', response.context['articles'][0])
-        #print('Count: ', len(response.context['articles']))
+        # print('myResponse', response.context['articles'][0])
+        # print('Count: ', len(response.context['articles']))
         self.assertEqual(response.status_code, 200)
         self.assertTrue('articles' in response.context)
         # TODO Correct below assertion. It should be greater than or equal to 10.
@@ -62,6 +64,7 @@ class ViewTests(TestCase):
         c = Client()
         response = c.get('/admin')
         self.assertEqual(response.status_code, 301)
+
 
 class ServiceTests(TestCase):
 
@@ -111,7 +114,8 @@ class ServiceTests(TestCase):
         tag_list = w.get_tag_data(w, term)
         for tag in tag_list:
             self.assertRegex(tag, r'([Q])\d{1,}')
-        
+
+
 class ArticleTests(TestCase):
     @classmethod
     def setUpArticleTestClassData(cls):
@@ -131,34 +135,31 @@ class ArticleTests(TestCase):
                                 keyword_list,
                                 ]
             single_article_list.append(row_article_list)
-            article_id +=1
+            article_id += 1
         return single_article_list
 
     def test_single_insert_to_db_successful(self):
         single_article_list = ArticleTests.setUpArticleTestClassData()
-        article = Article.objects.create(article_id = single_article_list[0][0],
-                            pub_date = single_article_list[0][1],
-                            article_title = single_article_list[0][2],
-                            article_abstract = single_article_list[0][3],
-                            author_list = single_article_list[0][4],
-                            keyword_list = single_article_list[0][5]
-                            )
+        article = Article.objects.create(article_id=single_article_list[0][0],
+                                         pub_date=single_article_list[0][1],
+                                         article_title=single_article_list[0][2],
+                                         article_abstract=single_article_list[0][3],
+                                         author_list=single_article_list[0][4],
+                                         keyword_list=single_article_list[0][5]
+                                         )
         print(article)
         self.assertEqual(article.article_id, 1)
 
     def test_multiple_insert_to_db_successful(self):
         single_article_list = ArticleTests.setUpArticleTestClassData()
         for i in range(len(single_article_list)):
-            article = Article.objects.create(article_id = single_article_list[i][0],
-                                pub_date = single_article_list[i][1],
-                                article_title = single_article_list[i][2],
-                                article_abstract = single_article_list[i][3],
-                                author_list = single_article_list[i][4],
-                                keyword_list = single_article_list[i][5]
-                                )
+            article = Article.objects.create(article_id=single_article_list[i][0],
+                                             pub_date=single_article_list[i][1],
+                                             article_title=single_article_list[i][2],
+                                             article_abstract=single_article_list[i][3],
+                                             author_list=single_article_list[i][4],
+                                             keyword_list=single_article_list[i][5]
+                                             )
             print(article)
         count = Article.objects.all().count()
         self.assertEqual(count, len(single_article_list))
-
-
-        

@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.db.models import JSONField
 
+
 # Create your models here.
 class Action(models.Model):
     activity = (('1', 'Follow'),
@@ -27,7 +28,7 @@ class Action(models.Model):
                                             db_index=True)
     target = GenericForeignKey('target_ct', 'target_id')
     created = models.DateTimeField(auto_now_add=True,
-                                db_index=True)
+                                   db_index=True)
     action_json = JSONField(default=dict)
 
     class Meta:
