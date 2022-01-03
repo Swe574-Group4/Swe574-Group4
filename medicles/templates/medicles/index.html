@@ -7,6 +7,23 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
   <link rel="stylesheet" href="static/medicles/css/mystyle.css" />
+  <style>
+    a:link {
+      text-decoration: none;
+    }
+    
+    a:visited {
+      text-decoration: none;
+    }
+    
+    a:hover {
+      text-decoration: underline;
+    }
+    
+    a:active {
+      text-decoration: underline;
+    }
+    </style>
 </head>
 
 <body>
@@ -16,7 +33,6 @@
     <a href="{% url 'medicles:advanced_search' %}"><i class="fa fa-fw fa-search"></i> Search</a>
     {% if user.is_authenticated %}
         <a href="{% url 'medicles:user_search' %}">User Search</a>
-        <a href="{% url 'medicles:user_activity' %}">User Activity</a>
     <a>
       Hi {{ user.username }}!
       <a href="{% url 'medicles:logout' %}">Log Out</a>
@@ -43,7 +59,7 @@
   </script>
 
   <div style="padding-left:16px">
-    <h1><br><br><br></h1>
+    <h1><br><br></h1>
   </div>
   {% block body_block %}
   {# Outside of here will be extended.#}
@@ -52,6 +68,47 @@
     <input type="text" placeholder="Search.." name="q" class="w3-white w3-button w3-round-xxlarge">
     <button type="submit" class="w3-round-xxlarge"><i class="fa fa-search"></i></button>
   </form>
+
+  <div style="text-align:left;margin: auto;max-width:600px;" class="w3-text-dark-grey">
+    
+    <br><br>
+ 
+      {% if user.is_authenticated %}
+      <hr>
+      <h2>Activities from last login</h2>
+      <hr> 
+            {% if activities|length == 0 %}
+            <p> There are no current activites for you!</p>
+            {% else %}
+                {% for activity in activities %}
+                <p>
+                  <a href={{ activity.2 }}> <mark>{{ activity.1 }}</mark> </a>
+
+                  {% if activity.0 == 'Follow' %}
+                    followed
+                  {% elif activity.0 == 'Search' %}
+                    searched
+                  {% elif activity.0 == 'Favourite' %}
+                    favourited
+                  {% elif activity.0 == 'Tag' %}
+                    tagged
+                  {% elif activity.0 == 'Annotate' %}
+                    annotated
+                  {% endif %}
+
+                  {% if  activity.0 == 'Search' or activity.0 == 'Tag' or activity.0 == 'Annotate'%}
+                    <a href="#"> <mark>{{ activity.3 }}</mark> </a>
+                  {% else %}
+                    <a href={{ activity.4 }}> <mark>{{ activity.3 }}</mark> </a>
+                  {% endif %}
+                  
+                  <br>
+                </p>
+                {% endfor %}
+            {% endif %}
+      {% endif %}
+    
+  </div>
 
   {% endblock %}
 

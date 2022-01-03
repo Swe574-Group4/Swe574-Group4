@@ -21,6 +21,5 @@ from django.urls import path, include
 urlpatterns = [
     path('', include('medicles.urls')),
     # Below will be used in 
-    path('^activity/', include('actstream.urls')),
     path('admin/', admin.site.urls),
 ]
