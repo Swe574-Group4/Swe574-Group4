@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 {% extends "medicles/index.html" %}
 {% block body_block %}
 {% csrf_token %}
@@ -7,14 +6,20 @@
 <form class="example2" action="{% url 'medicles:advanced_search' %}"
     style="text-align:left;margin: 10px;max-width:500px;" method="get">
     <label for="term" id="text">Search: </label> &nbsp; &nbsp;
-    <input type="text" placeholder="Search.." name="term" class="w3-white w3-button w3-round-xlarge">
+    <input type="text" placeholder="Search.." name="term" class="w3-white w3-button w3-round-xlarge" required>
+    <br>
+    <input type="radio" id="annotation" name="annotation">
+    <label for="annotation">Search in Annotations</label>
+    <!-- <input type="radio" id="annotationoff" name="noannotation" checked>
+    <label for="annotation">No Annotation</label> -->
+
     <br><br>
     <label for="term">Author: </label> &nbsp; &nbsp;
     <input type="text" placeholder="Search.." name="author" class="w3-white w3-button w3-round-xlarge">
     <br><br>
     <label for="term">Date: </label> &nbsp; &nbsp; &nbsp; &nbsp;
-    <input type="date" name="start-date" style="width:195px;border-radius: 12px;">
-    <input type="date" name="end-date" style="width:195px;border-radius: 12px;">
+    <input type="date" name="start_date" style="width:195px;border-radius: 12px;">
+    <input type="date" name="end_date" style="width:195px;border-radius: 12px;">
     <br>
     <br>
     <input type="radio" id="desc" name="radio" value="desc" checked>

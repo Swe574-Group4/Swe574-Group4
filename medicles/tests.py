@@ -7,18 +7,25 @@ import datetime
 from django.urls import reverse
 # Create your tests here.
 
+
 class ViewTests(TestCase):
-    
+
     # Test Index Page
     def test_index_page_accessed_successfully(self):
         c = Client()
         response = c.get('/')
-        self.assertEqual(response.status_code, 200 )
+        self.assertEqual(response.status_code, 200)
 
     # Test Search Page
     def test_search_page_accessed_successfully(self):
         c = Client()
         response = c.get('/search')
+        self.assertEqual(response.status_code, 301)
+
+    # Test Advanced Search Page
+    def test_advancedsearch_page_accessed_successfully(self):
+        c = Client()
+        response = c.get('/advanced_search')
         self.assertEqual(response.status_code, 301)
 
     # This function tests for a search term. Returns OK if it finds 10 or more articles in context.
@@ -42,6 +49,29 @@ class ViewTests(TestCase):
         # TODO Correct below assertion. It should be greater than or equal to 10.
         self.assertGreaterEqual(len(response.context['articles']), 0)
 
+    def test_advanced_search(self):
+        # Populate database for searching a term
+        srv_obj = services
+        term = 'reflux'
+        retmax = 100
+        retmax_iter = 50
+        srv_obj.create_db(term, retmax, retmax_iter)
+        # Create client and make a search
+        c = Client()
+        url = '/advanced_search/'
+        data = {'term': 'reflux', 'author': '', 'start_date': '2021-09-16',
+                'end_date': '', 'radio': '', 'keywords': ''}
+        invaliddata = {'term': 'reflux', 'author': '', 'start_date': '2022-12-31',
+                       'end_date': '2022-01-01', 'radio': '', 'keywords': ''}
+        # http://0.0.0.0:8000/advanced_search/?term=reflux&author=Alex&start_date=2021-09-16&end_date=&radio=desc&keywords=
+        response = c.get(url, data)
+        invalidresponse = c.get(url, invaliddata)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            'article_id' in response.context['articles'][0])
+        self.assertEqual('There is no articles between these dates. Please consider changing the Date Field.',
+                         invalidresponse.context[0]['failure'])
+
     # Signup form test: Creates user then authenticates.
     def test_signup_form_worked_successfully(self):
         c = Client()
@@ -62,6 +92,7 @@ class ViewTests(TestCase):
         c = Client()
         response = c.get('/admin')
         self.assertEqual(response.status_code, 301)
+
 
 class ServiceTests(TestCase):
 
@@ -111,7 +142,8 @@ class ServiceTests(TestCase):
         tag_list = w.get_tag_data(w, term)
         for tag in tag_list:
             self.assertRegex(tag, r'([Q])\d{1,}')
-        
+
+
 class ArticleTests(TestCase):
     @classmethod
     def setUpArticleTestClassData(cls):
@@ -131,34 +163,31 @@ class ArticleTests(TestCase):
                                 keyword_list,
                                 ]
             single_article_list.append(row_article_list)
-            article_id +=1
+            article_id += 1
         return single_article_list
 
     def test_single_insert_to_db_successful(self):
         single_article_list = ArticleTests.setUpArticleTestClassData()
-        article = Article.objects.create(article_id = single_article_list[0][0],
-                            pub_date = single_article_list[0][1],
-                            article_title = single_article_list[0][2],
-                            article_abstract = single_article_list[0][3],
-                            author_list = single_article_list[0][4],
-                            keyword_list = single_article_list[0][5]
-                            )
+        article = Article.objects.create(article_id=single_article_list[0][0],
+                                         pub_date=single_article_list[0][1],
+                                         article_title=single_article_list[0][2],
+                                         article_abstract=single_article_list[0][3],
+                                         author_list=single_article_list[0][4],
+                                         keyword_list=single_article_list[0][5]
+                                         )
         print(article)
         self.assertEqual(article.article_id, 1)
 
     def test_multiple_insert_to_db_successful(self):
         single_article_list = ArticleTests.setUpArticleTestClassData()
         for i in range(len(single_article_list)):
-            article = Article.objects.create(article_id = single_article_list[i][0],
-                                pub_date = single_article_list[i][1],
-                                article_title = single_article_list[i][2],
-                                article_abstract = single_article_list[i][3],
-                                author_list = single_article_list[i][4],
-                                keyword_list = single_article_list[i][5]
-                                )
+            article = Article.objects.create(article_id=single_article_list[i][0],
+                                             pub_date=single_article_list[i][1],
+                                             article_title=single_article_list[i][2],
+                                             article_abstract=single_article_list[i][3],
+                                             author_list=single_article_list[i][4],
+                                             keyword_list=single_article_list[i][5]
+                                             )
             print(article)
         count = Article.objects.all().count()
         self.assertEqual(count, len(single_article_list))
-
-
-        

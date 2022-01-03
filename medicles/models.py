@@ -11,6 +11,7 @@ from django.db.models import JSONField
 
 # Article will be filled Entrez API information.
 
+
 class Article(models.Model):
     # article_id = models.BigIntegerField()
     article_id = models.AutoField(primary_key=True)
@@ -33,8 +34,8 @@ class Article(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         Article.objects.update(search_vector=(
-                SearchVector('article_abstract', weight='A')
-                + SearchVector('keyword_list', weight='B')
+            SearchVector('article_abstract', weight='A')
+            + SearchVector('keyword_list', weight='B')
         )
         )
 
@@ -64,18 +65,21 @@ class Contact(models.Model):
         return f'{self.user_from} follow {self.user_to}'
 
 
-
 class Search(models.Model):
     user = models.IntegerField(blank=True, null=True)
     term = models.TextField(blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
 
+
 class Annotation(models.Model):
     article = ManyToManyField(Article)
+    article_id = models.CharField(max_length=100, blank=True, null=True)
     user = ManyToManyField(User)
-    annotation_key = models.CharField(unique=True, blank=True, null=True, max_length=100)
+    annotation_key = models.CharField(
+        unique=True, blank=True, null=True, max_length=100)
     annotation_value = models.CharField(blank=True, null=True, max_length=100)
     annotation_json = JSONField(default=dict)
+
 
 class FavouriteListTable(models.Model):
 
