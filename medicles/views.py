@@ -30,13 +30,42 @@ from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 import datetime
 from django.utils import timezone
+from django.core import serializers
 
 # Create your views here.
 
 
 def index(request):
     # context = "Welcome to medicles!"
-    return render(request, 'medicles/index.html')
+    activities = []
+    if not request.user.is_anonymous:
+        action_users = Action.objects.filter(target_id=request.user.id, verb=1)
+        print("User Last Login:", request.user.last_login)
+        actor_user_last_login = request.user.last_login.replace(tzinfo=None)
+        
+        for user in action_users:
+            user_actions = Action.objects.filter(user_id=user.user_id)
+            for action in user_actions:
+                print(action.action_json)
+            #deserialized = serializers.deserialize('json', user.action_json)
+                print(json.loads(action.action_json)['published'])
+                last_action = json.loads(action.action_json)
+                published_date = last_action['published']
+                activity_published_date = datetime.datetime.strptime(published_date[:-7], '%Y-%m-%dT%H:%M:%S')
+                if activity_published_date < actor_user_last_login:
+                    action_type = last_action['type']
+                    action_actor_name= last_action['actor']['name']
+                    action_actor_url = last_action['actor']['url']
+                    action_object_name = last_action['object']['name']
+                    action_object_url = last_action['object']['url']
+                    activities.append([ action_type,
+                                        action_actor_name,
+                                        action_actor_url,
+                                        action_object_name,
+                                        action_object_url
+                                        ])
+                    print("Date is ", True)
+    return render(request, 'medicles/index.html', {'activities': activities})
 
 
 # def search(request):
@@ -472,7 +501,7 @@ def ajax_required(f):
 
 
 # Used in W3C_JSON variable in activity functions
-home_url = "http://medicles.com"
+home_url = "http://localhost:8000"
 
 
 @ csrf_exempt
@@ -502,7 +531,7 @@ def user_follow(request):
             # user = User.objects.get(id=user_id)
 
             # Activity Streams 2.0 JSON-LD Implementation
-            w3c_json = {
+            w3c_json = json.dumps({
                 "@context": "https://www.w3.org/ns/activitystreams",
                 "summary": "{} is following {}".format(actor_fullname, target_fullname),
                 "type": "Follow",
@@ -519,7 +548,7 @@ def user_follow(request):
                     "url": target_profile_url,
                     "name": target_fullname,
                 }
-            }
+            })
             print(w3c_json)
 
             if action == 'follow':
@@ -565,7 +594,7 @@ def user_search_activity(user, search_term):
     target_object_name = get_target_search_name(target_search.id)
 
     # Activity Streams 2.0 JSON-LD Implementation
-    w3c_json = {
+    w3c_json = json.dumps({
         "@context": "https://www.w3.org/ns/activitystreams",
         "summary": "{} searched {}".format(actor_fullname, target_object_name),
         "type": "Search",
@@ -582,8 +611,9 @@ def user_search_activity(user, search_term):
             "url": target_object_url,
             "name": target_object_name,
         }
-    }
+    })
     print(w3c_json)
+
 
     # Create action for search term for a specific user
     create_action(user=user, verb=3, activity_json=w3c_json,
@@ -626,7 +656,7 @@ def favourite_article(request, article_id):
     target_object_name = article.article_title
 
     # Activity Streams 2.0 JSON-LD Implementation
-    w3c_json = {
+    w3c_json = json.dumps({
         "@context": "https://www.w3.org/ns/activitystreams",
         "summary": "{} favorited {}".format(actor_fullname, target_object_name),
         "type": "Favourite",
@@ -643,7 +673,7 @@ def favourite_article(request, article_id):
             "url": target_object_url,
             "name": target_object_name,
         }
-    }
+    })
     print(w3c_json)
 
     # remove user and article id info from favouriteListTable in database
@@ -655,7 +685,7 @@ def favourite_article(request, article_id):
         favourite.delete()
 
         # Delete action for favorite article by specific user
-        delete_action(user=user_updated, verb=3, target=article)
+        delete_action(user=user_updated, verb=4, target=article)
 
     # save and link user and article id in database
     else:
@@ -663,8 +693,7 @@ def favourite_article(request, article_id):
         favourite.save()
 
         # Create action for favorite article by specific user
-        create_action(user=user_updated, verb=3,
-                      activity_json=w3c_json, target=article)
+        create_action(user=user_updated, verb=4, activity_json=w3c_json, target=article)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
