@@ -579,45 +579,46 @@ def get_user_fullname(user):
 # This function saves user activity of each user.
 # It is being used in search() function above.
 def user_search_activity(user, search_term):
-    now = timezone.now()
-    last_minute = now - datetime.timedelta(seconds=60)
-    target_search = Search.objects.filter(
-        user=user.id, term=search_term, created__gte=last_minute).last()
+    if not user.is_anonymous:
+        now = timezone.now()
+        last_minute = now - datetime.timedelta(seconds=60)
+        target_search = Search.objects.filter(
+            user=user.id, term=search_term, created__gte=last_minute).last()
 
-    # Variables used for actor
-    published_date = get_published_date()
-    actor_profile_url = get_user_profile_url(user.id)
-    actor_fullname = get_user_fullname(user)
+        # Variables used for actor
+        published_date = get_published_date()
+        actor_profile_url = get_user_profile_url(user.id)
+        actor_fullname = get_user_fullname(user)
 
-    # Variables used for target
-    target_object_url = get_target_search_url(target_search.id)
-    target_object_name = get_target_search_name(target_search.id)
+        # Variables used for target
+        target_object_url = get_target_search_url(target_search.id)
+        target_object_name = get_target_search_name(target_search.id)
 
-    # Activity Streams 2.0 JSON-LD Implementation
-    w3c_json = json.dumps({
-        "@context": "https://www.w3.org/ns/activitystreams",
-        "summary": "{} searched {}".format(actor_fullname, target_object_name),
-        "type": "Search",
-        "published": published_date,
-        "actor": {
-            "type": "Person",
-            "id": actor_profile_url,
-            "name": actor_fullname,
-            "url": actor_profile_url
-        },
-        "object": {
-            "id": target_object_url,
-            "type": "Article",
-            "url": target_object_url,
-            "name": target_object_name,
-        }
-    })
-    print(w3c_json)
+        # Activity Streams 2.0 JSON-LD Implementation
+        w3c_json = json.dumps({
+            "@context": "https://www.w3.org/ns/activitystreams",
+            "summary": "{} searched {}".format(actor_fullname, target_object_name),
+            "type": "Search",
+            "published": published_date,
+            "actor": {
+                "type": "Person",
+                "id": actor_profile_url,
+                "name": actor_fullname,
+                "url": actor_profile_url
+            },
+            "object": {
+                "id": target_object_url,
+                "type": "Article",
+                "url": target_object_url,
+                "name": target_object_name,
+            }
+        })
+        # print(w3c_json)
 
 
-    # Create action for search term for a specific user
-    create_action(user=user, verb=3, activity_json=w3c_json,
-                  target=target_search)
+        # Create action for search term for a specific user
+        create_action(user=user, verb=3, activity_json=w3c_json,
+                    target=target_search)
     return True
 
 
