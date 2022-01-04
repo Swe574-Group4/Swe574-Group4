@@ -4,7 +4,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.db.models import JSONField
 
-# Create your models here.
+# This model keeps all the actions in the application
+# It is created separately from the main application.
+# Even if you remove the application medicles,
+# You can keep using this one.
 class Action(models.Model):
     activity = (('1', 'Follow'),
                 ('2', 'Unfollow'),
