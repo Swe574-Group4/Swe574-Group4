@@ -51,19 +51,20 @@ def index(request):
                 print(json.loads(action.action_json)['published'])
                 last_action = json.loads(action.action_json)
                 published_date = last_action['published']
-                activity_published_date = datetime.datetime.strptime(published_date[:-7], '%Y-%m-%dT%H:%M:%S')
+                activity_published_date = datetime.datetime.strptime(
+                    published_date[:-7], '%Y-%m-%dT%H:%M:%S')
                 if activity_published_date < actor_user_last_login:
                     action_type = last_action['type']
-                    action_actor_name= last_action['actor']['name']
+                    action_actor_name = last_action['actor']['name']
                     action_actor_url = last_action['actor']['url']
                     action_object_name = last_action['object']['name']
                     action_object_url = last_action['object']['url']
-                    activities.append([ action_type,
-                                        action_actor_name,
-                                        action_actor_url,
-                                        action_object_name,
-                                        action_object_url
-                                        ])
+                    activities.append([action_type,
+                                       action_actor_name,
+                                       action_actor_url,
+                                       action_object_name,
+                                       action_object_url
+                                       ])
                     print("Date is ", True)
     return render(request, 'medicles/index.html', {'activities': activities})
 
@@ -83,7 +84,6 @@ def index(request):
 # return render(request, 'medicles/search_results.html', {'articles': articles}) # add context variable if you want
 # to go back
 
-@csrf_exempt
 def advanced_search(request):
     search_term = request.GET.get('term', None)
     author = request.GET.get('author', None)
@@ -101,8 +101,6 @@ def advanced_search(request):
                 'article_title', weight='B') + SearchVector('article_abstract', weight='B')
             search_term_updated = SearchQuery(
                 search_term, search_type='websearch')
-            # articles = Article.objects.annotate(distance=TrigramDistance(
-            #     'keyword_list', search_term_updated)).filter(distance__lte=0.3).order_by('distance')
             articles = Article.objects.annotate(search=SearchVector(
                 'keyword_list', 'article_title', 'article_abstract'), ).filter(search=SearchQuery(search_term))
             Article_id = Annotation.objects.filter(
@@ -141,9 +139,8 @@ def advanced_search(request):
                     return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
                                                                                     'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
                                                                                     'start_date': start_date, 'radio': radio, 'annotate': annotate})
-                # if request.GET["annotation"] and radio == "rank":
-                #     articles = articles.order_by('-rank')
-                #     return render(request, 'medicles/advanced_searchresults.html', {'articles': articles})
+                else:
+                    return render(request, 'medicles/advanced_searchresults.html')
             except:
                 if radio == "desc":
                     articles = noAnnotation.order_by('-pub_date')
@@ -152,25 +149,17 @@ def advanced_search(request):
                     return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
                                                                                     'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
                                                                                     'start_date': start_date, 'radio': radio, 'paginate': paginate})
-                if radio == "asc":
+                else:
                     articles = noAnnotation.order_by('pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
                     return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
                                                                                     'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
                                                                                     'start_date': start_date, 'radio': radio, 'paginate': paginate})
-                # else:
-                #     articles = noAnnotation.order_by('-rank')
-                #     return render(request, 'medicles/search_results.html', {'articles': articles})
 
         else:
             failure = "There is no articles between these dates. Please consider changing the Date Field."
             return render(request, 'medicles/advanced_search.html', {'failure': failure})
-            # if request.is_ajax():
-    #     text = request.GET.get('term')
-    #     articles = Article.objects.filter(
-    #         article_title__icontains=text).values()
-    #     return JsonResponse({'articles': articles})
     else:
         return render(request, 'medicles/advanced_search.html')
 
@@ -414,8 +403,8 @@ def signup(request):
 
 def profile(request, user_id):
     user = User.objects.get(pk=user_id)
-    followerCount= Action.objects.filter(user_id=user.id, verb=1).count()
-    followingCount= Action.objects.filter(user_id=user.id, verb=1).count()
+    followerCount = Action.objects.filter(user_id=user.id, verb=1).count()
+    followingCount = Action.objects.filter(user_id=user.id, verb=1).count()
 
     tags = []
     try:
@@ -436,7 +425,6 @@ def profile(request, user_id):
         print(tag1.id)
         print(article1.article_id)
 
-
     return render(request, 'medicles/profile.html',
                   {'user': user, 'tags': tags, 'mostPopularTags': returnedTags, 'followerCount': followerCount,
                    'followingCount': followingCount, 'returnedTagArticles': returnedTagArticles})
@@ -450,6 +438,7 @@ def getReturnedTags(mostPopularTags, tags):
                 returnedTags.append(tag)
     return returnedTags
 
+
 def getArticlesFromTagId(tags):
     articles = {}
     sql2 = 'select * from medicles_article where article_id = (select article_id from medicles_tag_article where tag_id = %s)'
@@ -459,6 +448,7 @@ def getArticlesFromTagId(tags):
             articles[tag1] = articleList[0]
 
     return articles
+
 
 def user_search(request):
     return render(request, 'medicles/user_search.html')
@@ -647,10 +637,9 @@ def user_search_activity(user, search_term):
         })
         # print(w3c_json)
 
-
         # Create action for search term for a specific user
         create_action(user=user, verb=3, activity_json=w3c_json,
-                    target=target_search)
+                      target=target_search)
     return True
 
 
@@ -726,7 +715,8 @@ def favourite_article(request, article_id):
         favourite.save()
 
         # Create action for favorite article by specific user
-        create_action(user=user_updated, verb=4, activity_json=w3c_json, target=article)
+        create_action(user=user_updated, verb=4,
+                      activity_json=w3c_json, target=article)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 

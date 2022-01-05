@@ -115,11 +115,11 @@
         {% if user.is_authenticated %}
         <a href="{% url 'medicles:user_search' %}">User Search</a>
 
-      <a href="{% url 'medicles:logout' %}" style="float: right;">Log Out</a>
-    <a href="{% url 'medicles:profile' user.id%}" style="float: right;" >Hi {{ user.username }}!</a>
-      {% else %}
-      <a href="{% url 'medicles:login' %}" style="float: right;"><i class="fa fa-fw fa-user"></i> Login</a>
-      <a href="{% url 'medicles:signup' %}" style="float: right;"><i class="fa fa-fw fa-address-book"></i> Signup</a>
+        <a href="{% url 'medicles:logout' %}" style="float: right;">Log Out</a>
+        <a href="{% url 'medicles:profile' user.id%}" style="float: right;">Hi {{ user.username }}!</a>
+        {% else %}
+        <a href="{% url 'medicles:login' %}" style="float: right;"><i class="fa fa-fw fa-user"></i> Login</a>
+        <a href="{% url 'medicles:signup' %}" style="float: right;"><i class="fa fa-fw fa-address-book"></i> Signup</a>
 
         {% endif %}
 
@@ -191,12 +191,14 @@
     <script>
         $(document).ready(function () {
             $('#reverse').click(function () {
-                // var path = $(this).attr('url');
+
+                var path = $(this).attr('url');
+                console.log(path)
                 $.ajax({
-                    // url: "{% url 'medicles:advanced_search' %}",
+
                     url: '',
-                    type: "post",
-                    // dataType: 'json',
+                    type: 'get',
+
                     data: {
 
                         term: "",
@@ -209,14 +211,13 @@
                     },
 
                     success: function (response) {
-                        // alert("yes")
                         url = $(location).attr('href')
                         here = url.split('radio=')[1].split('&keywords=')[0]
                         // alert(yes.split('radio=')[1])
                         if (here === "desc") {
                             window.location.href = url.replace("desc", "asc");
                         }
-                        if (here === "asc") {
+                        else {
                             window.location.href = url.replace("asc", "desc");
                         }
 
