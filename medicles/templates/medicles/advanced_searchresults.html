@@ -114,13 +114,13 @@
         <a href="{% url 'medicles:advanced_search' %}"><i class="fa fa-fw fa-search"></i> Search</a>
         {% if user.is_authenticated %}
         <a href="{% url 'medicles:user_search' %}">User Search</a>
-        <a>
-            Hi {{ user.username }}!
-            <a href="{% url 'medicles:logout' %}">Log Out</a>
-            {% else %}
-            <a href="{% url 'medicles:login' %}"><i class="fa fa-fw fa-user "></i> Login</a>
-            <a href="{% url 'medicles:signup' %}"><i class="fa fa-fw fa-address-book"></i> Signup</a>
-        </a>
+
+      <a href="{% url 'medicles:logout' %}" style="float: right;">Log Out</a>
+    <a href="{% url 'medicles:profile' user.id%}" style="float: right;" >Hi {{ user.username }}!</a>
+      {% else %}
+      <a href="{% url 'medicles:login' %}" style="float: right;"><i class="fa fa-fw fa-user"></i> Login</a>
+      <a href="{% url 'medicles:signup' %}" style="float: right;"><i class="fa fa-fw fa-address-book"></i> Signup</a>
+
         {% endif %}
 
         <a href="javascript:void(0);" class="icon" onclick="myFunction()">
