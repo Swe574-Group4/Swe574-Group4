@@ -42,7 +42,7 @@ def index(request):
         action_users = Action.objects.filter(target_id=request.user.id, verb=1)
         print("User Last Login:", request.user.last_login)
         actor_user_last_login = request.user.last_login.replace(tzinfo=None)
-        
+
         for user in action_users:
             user_actions = Action.objects.filter(user_id=user.user_id)
             for action in user_actions:
@@ -414,19 +414,51 @@ def signup(request):
 
 def profile(request, user_id):
     user = User.objects.get(pk=user_id)
-    followerCount = 0
-    followingCount = 0
+    followerCount= Action.objects.filter(user_id=user.id, verb=1).count()
+    followingCount= Action.objects.filter(user_id=user.id, verb=1).count()
 
-    tags = get_list_or_404(Tag, user=user_id)
+    tags = []
+    try:
+        tags = get_list_or_404(Tag, user=user_id)
+    except:
+        print("No tags found")
+
     tagKeys = []
     for tag in tags:
         tagKeys.append(tag.tag_key)
 
     c = Counter(tagKeys)
     mostPopularTags = c.most_common(3)
+    returnedTags = getReturnedTags(mostPopularTags, tags)
+    returnedTagArticles = getArticlesFromTagId(tags)
 
-    return render(request, 'medicles/profile.html', {'user': user, 'tags': tags, 'mostPopularTags': mostPopularTags, 'followerCount': followerCount, 'followingCount': followingCount})
+    for tag1, article1 in returnedTagArticles.items():
+        print(tag1.id)
+        print(article1.article_id)
 
+
+    return render(request, 'medicles/profile.html',
+                  {'user': user, 'tags': tags, 'mostPopularTags': returnedTags, 'followerCount': followerCount,
+                   'followingCount': followingCount, 'returnedTagArticles': returnedTagArticles})
+
+
+def getReturnedTags(mostPopularTags, tags):
+    returnedTags = []
+    for mostPopularTag in mostPopularTags:
+        for tag in tags:
+            if tag.tag_key == mostPopularTag[0]:
+                returnedTags.append(tag)
+    return returnedTags
+
+def getArticlesFromTagId(tags):
+    articles = {}
+    sql2 = 'select * from medicles_article where article_id = (select article_id from medicles_tag_article where tag_id = %s)'
+    for tag1 in tags:
+        articleList: [Article] = list(Article.objects.raw(sql2, [tag1.id]))
+        if articleList[0].article_id is not None:
+            articles[tag1] = articleList[0]
+
+    return articles
 
 def user_search(request):
     return render(request, 'medicles/user_search.html')
@@ -713,30 +745,12 @@ def favourite_article_List(request):
     return render(request, 'medicles/favourites.html', {'articles': articles})
 
 
-def getUsersFromTagId(tags) -> list[User]:
-    userTags = getUsersWithQuery(tags)
-
-    userList = [User]
-    for userTag in userTags:
-        user = get_object_or_404(User, id=userTag)
-        userList.append(user)
+def getUsersFromTagId(tags) -> list:
+    userList = []
+    sql2 = 'select * from auth_user where id = (select user_id from medicles_tag_user where id = %s)'
+    for tag1 in tags:
+        userList2: [User] = list(User.objects.raw(sql2, [tag1.id]))
+        if userList2[0].id is not None:
+            userList.append(userList2[0])
 
     return userList
-
-
-def getUsersWithQuery(tags) -> list[int]:
-    userTags = []
-    conn = psycopg2.connect(
-        host="localhost",
-        database="medicles",
-        user="postgres",
-        password="postgres"
-    )
-    cur = conn.cursor()
-    sql = 'select user_id from medicles_tag_user where id = %s;'
-    for tag1 in tags:
-        cur.execute(sql, (tag1.id,))
-        result = cur.fetchone()
-        userTags.append(result[0])
-
-    return userTags

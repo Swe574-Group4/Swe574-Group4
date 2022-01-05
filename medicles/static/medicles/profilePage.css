@@ -46,6 +46,15 @@
     opacity: 0.9;
 }
 
+.recentTagsDiv {
+    margin-top: 100px;
+    margin-left: 32%;
+    width: 35%;
+    padding: 10px;
+    padding-bottom: 30px;
+    border: 5px solid gray;
+}
+
 .titleOfTab {
     text-align: center;
 }
