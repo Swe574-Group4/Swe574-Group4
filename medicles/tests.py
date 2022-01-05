@@ -9,6 +9,7 @@ from django.urls import reverse
 
 # Create your tests here.
 
+
 class ViewTests(TestCase):
 
     # Test Index Page
@@ -21,6 +22,12 @@ class ViewTests(TestCase):
     def test_search_page_accessed_successfully(self):
         c = Client()
         response = c.get('/search')
+        self.assertEqual(response.status_code, 301)
+
+    # Test Advanced Search Page
+    def test_advancedsearch_page_accessed_successfully(self):
+        c = Client()
+        response = c.get('/advanced_search')
         self.assertEqual(response.status_code, 301)
 
     # This function tests for a search term. Returns OK if it finds 10 or more articles in context.
@@ -43,6 +50,29 @@ class ViewTests(TestCase):
         self.assertTrue('articles' in response.context)
         # TODO Correct below assertion. It should be greater than or equal to 10.
         self.assertGreaterEqual(len(response.context['articles']), 0)
+
+    def test_advanced_search(self):
+        # Populate database for searching a term
+        srv_obj = services
+        term = 'reflux'
+        retmax = 100
+        retmax_iter = 50
+        srv_obj.create_db(term, retmax, retmax_iter)
+        # Create client and make a search
+        c = Client()
+        url = '/advanced_search/'
+        data = {'term': 'reflux', 'author': '', 'start_date': '2021-09-16',
+                'end_date': '', 'radio': '', 'keywords': ''}
+        invaliddata = {'term': 'reflux', 'author': '', 'start_date': '2022-12-31',
+                       'end_date': '2022-01-01', 'radio': '', 'keywords': ''}
+        # http://0.0.0.0:8000/advanced_search/?term=reflux&author=Alex&start_date=2021-09-16&end_date=&radio=desc&keywords=
+        response = c.get(url, data)
+        invalidresponse = c.get(url, invaliddata)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            'article_id' in response.context['articles'][0])
+        self.assertEqual('There is no articles between these dates. Please consider changing the Date Field.',
+                         invalidresponse.context[0]['failure'])
 
     # Signup form test: Creates user then authenticates.
     def test_signup_form_worked_successfully(self):

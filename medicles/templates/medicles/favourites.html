@@ -128,13 +128,10 @@
 </div>
 
 <div class="w3-container w3-margin-right w3-margin-left">
-    <h2 class="w3-container">Search Results</h2>
-    <h4 class="w3-container w3-text-blue-grey"><strong>{{ articles.count }} articles found</strong></h4>
+    <h2 class="w3-container">Your Favourited Articles</h2>
+    <h4 class="w3-container w3-text-blue-grey"><strong> You have favorited {{ articles.count }} articles so far {{ user.username }}!</strong></h4>
 
-{#        {% for article in articles %}#}
-    {% for article in paginated_articles %}
-
-
+    {% for article in articles %}
         <div class="w3-container w3-margin-right w3-margin-left">
 
             <h3 class="w3-text-teal"><a
@@ -143,29 +140,10 @@
                 {{ article.pub_date }}</a></h6>
             <h6><a class="w3-text-gray"><strong>Author List</strong>: {{ article.author_list }}</a></h6>
             <p>{{ article.article_abstract }}</p>
-            <p><strong>Tags:</strong>
-                {% for tag_obj in article.tag_set.all %}
-                    <span><a href="{{ tag_obj.tag_value }}"
-                             class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }} </a></span>
-                {% endfor %}
-                <!--<button type="button" class="w3-white w3-border w3-border-white"><a  class="w3-teal w3-button w3-round-xxlarge" href="/tag/{{article.article_id}}">Add Tag</a></button>
-        -->
-            </p>
-            <p><strong class="w3-text-gray">Rank:</strong> {{ article.rank }}</p>
             <hr>
         </div>
     {% endfor %}
 </div>
-
-{% if paginated_articles.has_previous %}
-<a href="?q={{search_term}}&page={{paginated_articles.previous_page_number}}">Previous Page</a>
-{% endif %}
-
-{{paginated_articles }}
-
-{% if paginated_articles.has_next %}
-<a href="?q={{search_term}}&page={{paginated_articles.next_page_number}}">Next Page</a>
-{% endif %}
 
 <div class="w3-container w3-margin-left">
     <p class="w3-text-teal"><a class="active" href="{% url 'medicles:index' %}">Click to return to home page</a></p>

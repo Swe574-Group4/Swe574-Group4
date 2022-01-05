@@ -17,8 +17,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ee%aggxdqkr@d_-hz2&^@g2ru_d4ywvjn-@+53p+&q9)j)+#ln'
-# SECRET_KEY = os.environ['SECRET_KEY']
+# SECRET_KEY = 'django-insecure-ee%aggxdqkr@d_-hz2&^@g2ru_d4ywvjn-@+53p+&q9)j)+#ln'
+SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -38,8 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'coverage',
-    'django.contrib.sites',
-    'actstream'
+    'django.contrib.sites'
 ]
 
 SITE_ID = 1
@@ -80,6 +79,7 @@ WSGI_APPLICATION = 'pubmed_project.wsgi.application'
 # ATTENTION !!!
 # While running in local either comment out below section or
 # use 'Production Database Configuration' with Environment Variables.
+
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
@@ -140,6 +140,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, '/')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'), ]
 
 # Default primary key field type

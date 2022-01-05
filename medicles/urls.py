@@ -12,7 +12,6 @@ urlpatterns = [
     path('search/', views.search, name='search'),
 
     # Advanced search page
-    # path('advanced_search/', views.advancedSearch, name='advanced_search'),
     path('advanced_search/', views.advanced_search, name='advanced_search'),
 
     path('article/<int:article_id>/', views.detail, name='detail'),
@@ -33,7 +32,8 @@ urlpatterns = [
 
     path('usersearch/', views.user_search, name='user_search'),
 
-    path('usersearchresults/', views.user_search_results, name='user_search_results'),
+    path('usersearchresults/', views.user_search_results,
+         name='user_search_results'),
 
     # User Follow Action
     path('users/follow/', views.user_follow, name='user_follow'),
@@ -42,5 +42,11 @@ urlpatterns = [
     path('useractivity/', views.user_activity, name='user_activity'),
 
     path('loadAnnotation/', views.ajax_load_annotation, name='ajax_load_annotation'),
+
+    path('favouriteArticle/<int:article_id>/',
+         views.favourite_article, name='favourite_article'),
+
+    path('favourites/', views.favourite_article_List,
+         name='favourite_article_List')
 
 ]

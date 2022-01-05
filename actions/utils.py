@@ -13,8 +13,15 @@ def create_action(user, verb, activity_json, target=None):
                                             created__gte=last_minute)
     if target:
         target_ct = ContentType.objects.get_for_model(target)
-        similar_actions = similar_actions.filter(target_ct=target_ct,
-                                                 target_id=target.id)
+        print('target_ct', target_ct)
+        if 'article' in str(target_ct):
+
+            similar_actions = similar_actions.filter(target_ct=target_ct,
+                                                     target_id=target.article_id)
+        else:
+
+            similar_actions = similar_actions.filter(target_ct=target_ct,
+                                                     target_id=target.id)
     if not similar_actions:
         # no existing actions found
         action = Action(user=user, verb=verb, target=target, action_json=activity_json)
@@ -25,6 +32,13 @@ def create_action(user, verb, activity_json, target=None):
 
 def delete_action(user, verb, target=None):
     # no existing actions found
-    action = Action.objects.filter(user_id=user.id, verb=verb, target_id=target.id)
+    target_ct = ContentType.objects.get_for_model(target)
+    if 'article' in str(target_ct):
+
+        action = Action.objects.filter(user_id=user.id, verb=verb, target_id=target.article_id)
+        print(action)
+    else:
+
+        action = Action.objects.filter(user_id=user.id, verb=verb, target_id=target.id)
     action.delete()
     return True
