@@ -168,8 +168,7 @@
             <p id="articleAbstract">{{ article.article_abstract }}</p>
             <p><strong>Tags:</strong>
                 {% for tag_obj in article.tag_set.all %}
-                <span><a href="{{ tag_obj.tag_value }}" class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{
-                        tag_obj.tag_key }} </a></span>
+                <span><a href="{{ tag_obj.tag_value }}" class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{tag_obj.tag_key }} </a></span>
                 {% endfor %}
             </p>
             <!–– {{ annotation_obj.annotation_json }} for retrieving Json data ––>

@@ -1,5 +1,5 @@
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
-from .models import Search
+from .models import Contact, Search
 import datetime
 import json
 import psycopg2
@@ -440,8 +440,8 @@ def user_search_results(request):
         rank__gte=0.4).order_by('-rank')
     tags = Tag.objects.annotate(rank=SearchRank(search_vector_tag, search_term_updated_tag, cover_density=True)).filter(
         rank__gte=0.4).order_by('-rank')
-    taggedUsers = getUsersFromTagId(tags)
-
+    #taggedUsers = getUsersFromTagId(tags)
+    taggedUsers = []
     return render(request, 'medicles/user_search_results.html', {'users': users, 'taggedUsers': taggedUsers})
 
 # User Activity View
@@ -544,10 +544,15 @@ def user_follow(request):
             print(w3c_json)
 
             if action == 'follow':
+                Contact.objects.get_or_create(user_from=request.user,
+                                              user_to=user)
                 create_action(request.user, verb=1,
                               activity_json=w3c_json, target=user)
             else:
-                delete_action(request.user, 'is following', user)
+                print("I am here!!!")
+                Contact.objects.filter(user_from=request.user,
+                                       user_to=user).delete()
+                delete_action(request.user, verb=1, target=user)
             return JsonResponse({'status': 'ok'})
         except User.DoesNotExist:
             return JsonResponse({'status': 'error'})
