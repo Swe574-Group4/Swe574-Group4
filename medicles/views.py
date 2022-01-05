@@ -37,7 +37,7 @@ def index(request):
         action_users = Action.objects.filter(target_id=request.user.id, verb=1)
         print("User Last Login:", request.user.last_login)
         actor_user_last_login = request.user.last_login.replace(tzinfo=None)
-        
+
         for user in action_users:
             user_actions = Action.objects.filter(user_id=user.user_id)
             for action in user_actions:
@@ -409,18 +409,52 @@ def signup(request):
 
 def profile(request, user_id):
     user = User.objects.get(pk=user_id)
-    followerCount = 0
-    followingCount = 0
+    followerCount= Action.objects.filter(user_id=user.id, verb=1).count()
+    followingCount= Action.objects.filter(user_id=user.id, verb=1).count()
 
-    tags = get_list_or_404(Tag, user=user_id)
+    tags = []
+    try:
+        tags = get_list_or_404(Tag, user=user_id)
+    except:
+        print("No tags found")
+
     tagKeys = []
     for tag in tags:
         tagKeys.append(tag.tag_key)
 
     c = Counter(tagKeys)
     mostPopularTags = c.most_common(3)
+    returnedTags = getReturnedTags(mostPopularTags, tags)
+    returnedTagArticles = getArticlesFromTagId(tags)
 
-    return render(request, 'medicles/profile.html', {'user': user, 'tags': tags, 'mostPopularTags': mostPopularTags, 'followerCount': followerCount, 'followingCount': followingCount})
+    for tag1, article1 in returnedTagArticles.items():
+        print(tag1.id)
+        print(article1.article_id)
+
+
+    return render(request, 'medicles/profile.html',
+                  {'user': user, 'tags': tags, 'mostPopularTags': returnedTags, 'followerCount': followerCount,
+                   'followingCount': followingCount, 'returnedTagArticles': returnedTagArticles})
+
+
+def getReturnedTags(mostPopularTags, tags):
+    returnedTags = []
+    for mostPopularTag in mostPopularTags:
+        for tag in tags:
+            if tag.tag_key == mostPopularTag[0]:
+                returnedTags.append(tag)
+    return returnedTags
+
+def getArticlesFromTagId(tags):
+    articles = {}
+    sql2 = 'select * from medicles_article where article_id = (select article_id from medicles_tag_article where tag_id = %s)'
+    for tag1 in tags:
+        articleList: [Article] = list(Article.objects.raw(sql2, [tag1.id]))
+        if articleList[0].article_id is not None:
+            articles[tag1] = articleList[0]
+
+    return articles
+
 
 def user_search(request):
     return render(request, 'medicles/user_search.html')
@@ -440,8 +474,7 @@ def user_search_results(request):
         rank__gte=0.4).order_by('-rank')
     tags = Tag.objects.annotate(rank=SearchRank(search_vector_tag, search_term_updated_tag, cover_density=True)).filter(
         rank__gte=0.4).order_by('-rank')
-    #taggedUsers = getUsersFromTagId(tags)
-    taggedUsers = []
+    taggedUsers = getUsersFromTagId(tags)
     return render(request, 'medicles/user_search_results.html', {'users': users, 'taggedUsers': taggedUsers})
 
 # User Activity View
@@ -575,44 +608,46 @@ def user_search_activity(user, search_term):
     This function saves user activity of each user.
     It is being used in search() function above.
     """
-    now = timezone.now()
-    last_minute = now - datetime.timedelta(seconds=60)
-    target_search = Search.objects.filter(
-        user=user.id, term=search_term, created__gte=last_minute).last()
+    if not user.is_anonymous:
+        now = timezone.now()
+        last_minute = now - datetime.timedelta(seconds=60)
+        target_search = Search.objects.filter(
+            user=user.id, term=search_term, created__gte=last_minute).last()
 
-    # Variables used for actor
-    published_date = get_published_date()
-    actor_profile_url = get_user_profile_url(user.id)
-    actor_fullname = get_user_fullname(user)
+        # Variables used for actor
+        published_date = get_published_date()
+        actor_profile_url = get_user_profile_url(user.id)
+        actor_fullname = get_user_fullname(user)
 
-    # Variables used for target
-    target_object_url = get_target_search_url(target_search.id)
-    target_object_name = get_target_search_name(target_search.id)
+        # Variables used for target
+        target_object_url = get_target_search_url(target_search.id)
+        target_object_name = get_target_search_name(target_search.id)
 
-    # Activity Streams 2.0 JSON-LD Implementation
-    w3c_json = json.dumps({
-        "@context": "https://www.w3.org/ns/activitystreams",
-        "summary": "{} searched {}".format(actor_fullname, target_object_name),
-        "type": "Search",
-        "published": published_date,
-        "actor": {
-            "type": "Person",
-            "id": actor_profile_url,
-            "name": actor_fullname,
-            "url": actor_profile_url
-        },
-        "object": {
-            "id": target_object_url,
-            "type": "Article",
-            "url": target_object_url,
-            "name": target_object_name,
-        }
-    })
-    print(w3c_json)
+        # Activity Streams 2.0 JSON-LD Implementation
+        w3c_json = json.dumps({
+            "@context": "https://www.w3.org/ns/activitystreams",
+            "summary": "{} searched {}".format(actor_fullname, target_object_name),
+            "type": "Search",
+            "published": published_date,
+            "actor": {
+                "type": "Person",
+                "id": actor_profile_url,
+                "name": actor_fullname,
+                "url": actor_profile_url
+            },
+            "object": {
+                "id": target_object_url,
+                "type": "Article",
+                "url": target_object_url,
+                "name": target_object_name,
+            }
+        })
+        # print(w3c_json)
 
-    # Create action for search term for a specific user
-    create_action(user=user, verb=3, activity_json=w3c_json,
-                  target=target_search)
+
+        # Create action for search term for a specific user
+        create_action(user=user, verb=3, activity_json=w3c_json,
+                    target=target_search)
     return True
 
 # Gets target search url used in activity json
@@ -703,30 +738,12 @@ def favourite_article_List(request):
     return render(request, 'medicles/favourites.html', {'articles': articles})
 
 
-def getUsersFromTagId(tags) -> list[User]:
-    userTags = getUsersWithQuery(tags)
-
-    userList = [User]
-    for userTag in userTags:
-        user = get_object_or_404(User, id=userTag)
-        userList.append(user)
+def getUsersFromTagId(tags) -> list:
+    userList = []
+    sql2 = 'select * from auth_user where id = (select user_id from medicles_tag_user where id = %s)'
+    for tag1 in tags:
+        userList2: [User] = list(User.objects.raw(sql2, [tag1.id]))
+        if userList2[0].id is not None:
+            userList.append(userList2[0])
 
     return userList
-
-
-def getUsersWithQuery(tags) -> list[int]:
-    userTags = []
-    conn = psycopg2.connect(
-        host="localhost",
-        database="medicles",
-        user="postgres",
-        password="postgres"
-    )
-    cur = conn.cursor()
-    sql = 'select user_id from medicles_tag_user where id = %s;'
-    for tag1 in tags:
-        cur.execute(sql, (tag1.id,))
-        result = cur.fetchone()
-        userTags.append(result[0])
-
-    return userTags
