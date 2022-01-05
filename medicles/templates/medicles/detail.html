@@ -212,6 +212,15 @@
             <h3 class="w3-text-teal"><a
                     href="{% url 'medicles:detail' article.article_id %}"></a>{{ article.article_title }}
             </h3>
+            <button style="float:right;" id="favourite" data-id="{{ article.article_id }}"
+                    data-action="{% if alreadyFavourited == True %}Un{% endif %}favourite"
+                    class="w3-button w3-round-xlarge w3-teal w3-padding-medium">
+                {% if alreadyFavourited == False %}
+                    favourite
+                {% else %}
+                    unfavourite
+                {% endif %}
+            </button>
             <h6><a class="w3-text-gray"><strong>PMID</strong>: <span id="articleIDSpan">{{ article.article_id }}</span>
                 <strong>Publish
                     Date: </strong>: {{ article.pub_date }}</a></h6>
@@ -225,7 +234,8 @@
                 {% endfor %}
             </p>
 
-            <button type="button" style="background: none; border: none" class="collapsible icon w3-text-teal">Show Previous
+            <button type="button" style="background: none; border: none" class="collapsible icon w3-text-teal">Show
+                Previous
                 Annotations
             </button>
             <div class="content">
@@ -553,13 +563,11 @@
         } else if (document.selection) {  // IE?
             document.selection.empty();
         }
-
         document.getElementById("annotationField").value = ""
         document.getElementById("textToBeAnnotated").value = ""
         document.getElementById("annotationField").disabled = true
         document.getElementById("annotationBT").disabled = true
     }
-
 
     <!-- Get previous tag values-->
 
@@ -586,6 +594,14 @@
 
 </script>
 
+<script type="text/javascript">
+
+    $('#favourite').click(function () {
+
+        $.post('{% url "medicles:favourite_article" article.article_id %}');
+
+    });
+</script>
 
 {% if alert_flag %}
     <script>alert("Tag exists. Please specify another tag name.")</script>
