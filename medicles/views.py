@@ -436,7 +436,7 @@ def profile(request, user_id):
         print(tag1.id)
         print(article1.article_id)
 
-    users_favourite_list = FavouriteListTable.objects.filter(user=user.id, ).order_by('favouriteDate')
+    users_favourite_list = FavouriteListTable.objects.filter(user=user.id, )
     print(users_favourite_list)
     # retrieve article_id and the article objects from Article table
     article_id_list = []
