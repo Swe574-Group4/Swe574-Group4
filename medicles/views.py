@@ -1,5 +1,5 @@
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
-from .models import Contact, Search
+from .models import Contact, Search, CustomUser
 import datetime
 import json
 from django.core.serializers.json import DjangoJSONEncoder
@@ -41,9 +41,12 @@ def index(request):
     """
     activities = []
     if not request.user.is_anonymous:
+        actor_user =  CustomUser.objects.filter(user=request.user.id).order_by('-last_login')[1]
         action_users = Action.objects.filter(target_id=request.user.id, verb=1)
         print("User Last Login:", request.user.last_login)
-        actor_user_last_login = request.user.last_login.replace(tzinfo=None)
+        actor_user_last_login = actor_user.last_login.replace(tzinfo=None)
+        print("Previous Login:", actor_user_last_login)
+        # actor_user_last_login = request.user.last_login.replace(tzinfo=None)
 
         for user in action_users:
             user_actions = Action.objects.filter(user_id=user.user_id)
@@ -55,7 +58,7 @@ def index(request):
                 published_date = last_action['published']
                
                 activity_published_date = datetime.datetime.strptime(published_date[:-7], '%Y-%m-%dT%H:%M:%S')
-                if activity_published_date < actor_user_last_login:
+                if activity_published_date > actor_user_last_login:
                     action_type = last_action['type']
                     action_actor_name = last_action['actor']['name']
                     action_actor_url = last_action['actor']['url']
@@ -67,7 +70,7 @@ def index(request):
                                        action_object_name,
                                        action_object_url
                                        ])
-                    print("Date is ", True)
+                    print("Date is", True)
         print(activities)
         new_activities = []
         for elem in activities:
