@@ -94,7 +94,6 @@ class FavouriteListTable(models.Model):
                                 on_delete=CASCADE)
     user = models.ForeignKey('auth.User',
                              db_index=True,
-
                              blank=True,
                              null=True,
                              on_delete=CASCADE)
