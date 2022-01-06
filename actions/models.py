@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.db.models import JSONField
 
+
 # This model keeps all the actions in the application
 # It is created separately from the main application.
 # Even if you remove the application medicles,
@@ -30,7 +31,7 @@ class Action(models.Model):
                                             db_index=True)
     target = GenericForeignKey('target_ct', 'target_id')
     created = models.DateTimeField(auto_now_add=True,
-                                db_index=True)
+                                   db_index=True)
     action_json = JSONField(default=dict)
 
     class Meta:
