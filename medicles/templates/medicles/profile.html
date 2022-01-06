@@ -207,6 +207,37 @@
 
 
 </div>
+
+<div class="w3-container w3-margin-right w3-margin-left">
+    <h2 class="w3-container"> {{ user.username }}'s Favourited Articles</h2>
+    <h4 class="w3-container w3-text-blue-grey"><strong> Total of {{ paginated_favourite_articles.count }} articles favorited </strong></h4>
+
+    {% for fav_article in paginated_favourite_articles %}
+        <div class="w3-container w3-margin-right w3-margin-left">
+
+            <h3 class="w3-text-teal"><a
+                    href="{% url 'medicles:detail' fav_article.article_id %}">{{ fav_article.article_title }}</h3>
+            <h6><a class="w3-text-gray"><strong>PMID</strong>: {{ fav_article.article_id }} <strong>Publish Date: </strong>:
+                {{ fav_article.pub_date }}</a></h6>
+            <h6><a class="w3-text-gray"><strong>Author List</strong>: {{ fav_article.author_list }}</a></h6>
+            <p>{{ fav_article.article_abstract }}</p>
+            <hr>
+        </div>
+    {% endfor %}
+
+</div>
+
+{% if paginated_favourite_articles.has_previous %}
+<a href="?&page={{paginated_favourite_articles.previous_page_number}}">Previous Page</a>
+{% endif %}
+
+{{paginated_favourite_articles }}
+
+{% if paginated_favourite_articles.has_next %}
+<a href="?&page={{paginated_favourite_articles.next_page_number}}">Next Page</a>
+{% endif %}
+
+
 <hr>
 <hr>
 
