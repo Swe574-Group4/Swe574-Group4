@@ -436,10 +436,25 @@ def profile(request, user_id):
         print(tag1.id)
         print(article1.article_id)
 
+    users_favourite_list = FavouriteListTable.objects.filter(user=user.id, ).order_by('favouriteDate')
+    print(users_favourite_list)
+    # retrieve article_id and the article objects from Article table
+    article_id_list = []
+    for object in users_favourite_list:
+        article_id_list.append(object.article_id)
+    users_favourite_articles = Article.objects.filter(article_id__in=article_id_list)
+
+    #paginate result object in bundles of 5
+    paginate = Paginator(users_favourite_articles, 5)
+    #set default page as 1 and get the desired page number from request
+    page_number = request.GET.get('page', 1)
+    # select objects realted to the specified page number
+    paginated_favourite_articles = paginate.get_page(page_number)
 
     return render(request, 'medicles/profile.html',
                   {'user': user, 'tags': tags, 'mostPopularTags': returnedTags, 'followerCount': followerCount,
-                   'followingCount': followingCount, 'returnedTagArticles': returnedTagArticles})
+                   'followingCount': followingCount, 'returnedTagArticles': returnedTagArticles,
+                   'paginated_favourite_articles': paginated_favourite_articles}, )
 
 
 def getReturnedTags(mostPopularTags, tags):
