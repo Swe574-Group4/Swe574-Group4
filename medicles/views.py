@@ -1,43 +1,46 @@
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
-from .models import Search
+from .models import Contact, Search
 import datetime
 import json
 from django.core.serializers.json import DjangoJSONEncoder
-
+import hashlib
 import psycopg2
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramDistance
 from django.db import IntegrityError
-
 from django.shortcuts import redirect, render, get_object_or_404, get_list_or_404
-
+from annotations.models import AnnotationModel
+from annotations.utils import save_annotation_json
 from medicles.forms import AnnotationForm
 from medicles.models import Article, Tag, Annotation, FavouriteListTable
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
+from django.core import serializers
 from django.core.paginator import Paginator, EmptyPage
 from collections import Counter
-
 
 from actions.utils import create_action, delete_action
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .models import Contact
 from actions.models import Action
 from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
-import datetime
 from django.utils import timezone
 from django.core import serializers
 from django.db.models import Q
 
+
 # Create your views here.
 
-
 def index(request):
-    # context = "Welcome to medicles!"
+    """
+    This function returns the home page of the application.
+
+    * If user logged in, it will return user activities as well.
+    * If user is anonymous, it will just provide search bar.
+    """
     activities = []
     if not request.user.is_anonymous:
         action_users = Action.objects.filter(target_id=request.user.id, verb=1)
@@ -47,9 +50,9 @@ def index(request):
         for user in action_users:
             user_actions = Action.objects.filter(user_id=user.user_id)
             for action in user_actions:
-                print(action.action_json)
-            # deserialized = serializers.deserialize('json', user.action_json)
-                print(json.loads(action.action_json)['published'])
+                # print(action.action_json)
+                # print(json.loads(action.action_json)['published'])
+
                 last_action = json.loads(action.action_json)
                 published_date = last_action['published']
                 activity_published_date = datetime.datetime.strptime(
@@ -70,21 +73,7 @@ def index(request):
     return render(request, 'medicles/index.html', {'activities': activities})
 
 
-# def search(request):
-#     search_term = request.GET.get('q', None)
-#     #search_term = 'covid'
-#     if not search_term:
-#         render(request, 'medicles/index.html')
-#         #raise Http404('Please enter a word at least!')
-
-#     articles = Article.objects.search(search_term)
-#     context = {'articles': articles}
-#     #print(context)
-
-
-# return render(request, 'medicles/search_results.html', {'articles': articles}) # add context variable if you want
-# to go back
-
+@csrf_exempt
 def advanced_search(request):
     term = request.GET.get('term', None)
     search_term = str(term).split()
@@ -139,9 +128,11 @@ def advanced_search(request):
                     articles = articles.order_by('-pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
-                    return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
-                                                                                    'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
-                                                                                    'start_date': start_date, 'radio': radio, 'annotate': annotate})
+                    return render(request, 'medicles/advanced_searchresults.html',
+                                  {'articles': articles, 'paginated_articles': paginated_articles,
+                                   'search_term': search_term, 'author': author, 'keywords': keyword,
+                                   'end_date': end_date,
+                                   'start_date': start_date, 'radio': radio, 'annotate': annotate})
                 if annotate and radio == "asc":
                     articles = articles.order_by('pub_date')
                     paginate = Paginator(articles, 20)
@@ -175,6 +166,15 @@ def advanced_search(request):
 
 
 def search(request):
+    """
+    This function provides main search functionality.
+
+    * When you enter a word, it will search based on weights.
+    * Weights are given below:
+      * A: Keywords
+      * B: Article title
+      * C: Article Abstract
+    """
     search_term = request.GET.get('q', None)
     if not search_term:
         render(request, 'medicles/index.html')
@@ -198,17 +198,19 @@ def search(request):
     search_obj = Search(user=request.user.id, term=search_term)
     search_obj.save()
 
-    # now = timezone.now()
-    # last_minute = now - datetime.timedelta(seconds=120)
-    # target_search = Search.objects.get(user=request.user.id, term=search_term, created__gte=last_minute)
-    # create_action(user=request.user, verb='searched', target=target_search)
-
     user_search_activity(request.user, search_term)
 
-    return render(request, 'medicles/search_results.html', {'articles': articles, 'paginated_articles': paginated_articles, 'search_term': search_term})
+    return render(request, 'medicles/search_results.html',
+                  {'articles': articles, 'paginated_articles': paginated_articles, 'search_term': search_term})
 
 
 def detail(request, article_id):
+    """
+    Returns detail of an article on a separate page.
+    Provides below options:
+    * You can tag the article both as free text or using Wikidata tags
+    * You can favourite the article
+    """
     article = Article.objects.get(pk=article_id)
     article = get_object_or_404(Article, pk=article_id)
 
@@ -233,6 +235,14 @@ def detail(request, article_id):
 
 @ login_required
 def add_tag(request, article_id):
+    """
+    This function helps you to tag the article.
+    * You can use just free text
+    * You can use just Wikidata tags
+    * You can use both free and Wikidata tags
+      If you use both, you will see your text on the page.
+      However, when you click, it will redirect you to the Wikidata page.
+    """
     alert_flag = False
     if request.method == 'POST':
         form = TagForm(request.POST)
@@ -306,7 +316,6 @@ def add_tag(request, article_id):
                     alert_flag = True
             else:
                 pass
-
     else:
         form = TagForm()
 
@@ -318,12 +327,10 @@ def add_annotation(request, article_id):
     alert_flag = False
     if request.method == 'POST':
         form = AnnotationForm(request.POST)
-
         annotation_request_from_browser = ''
         if form.is_valid():
 
             # Retrieve values for w3c_json_annotation from form data.
-
             article_will_be_updated = Article.objects.get(
                 pk=article_id)  # Gets the article that will be associated
             # Gets the user that will be associated
@@ -347,29 +354,39 @@ def add_annotation(request, article_id):
                         "type": "Annotation",
                         "body": {
                             "type": "TextualBody",
-                            "purpose": "Tagging",
-                            "value": annotation_input
+                            "purpose": "tagging",
+                            "value": annotation_input,
+                            "format": "text/plain"
                         },
                         "target": {
-                            "source": user_def_annotation_key,
+                            "source": f'http://localhost:8000/article/{article_id}',
                             "selector": {
                                 "type": "TextPositionSelector",
                                 "start": startIndex,
                                 "end": endIndex
-                            }
+                            },
+                            "text": user_def_annotation_key
+                        },
+                        "creator": {
+                            "id": request.user.id,
+                            "type": "Person",
+                            "name": str(request.user),
+                            "nickname": "pseudo",
+                            "email_sha1": request.user.email
                         },
                         "created": str(datetime.datetime.now().date())
                     }
+                    save_annotation_json(w3c_jsonld_annotation, article_id)
 
                     print(w3c_jsonld_annotation)
-                    annotation = Annotation(annotation_key=user_def_annotation_key,
-                                            annotation_value=annotation_input,
-                                            annotation_json=w3c_jsonld_annotation,
-                                            article_id=article_id
-                                            )
-                    annotation.save()
-                    annotation.article.add(article_will_be_updated)
-                    annotation.user.add(user_will_be_updated)
+                    # annotation = Annotation(annotation_key=user_def_annotation_key,
+                    #                       annotation_value=annotation_input,
+                    #                      annotation_json=w3c_jsonld_annotation
+                    #                       )
+                    # annotation.save()
+                    # annotation.article.add(article_will_be_updated)
+                    # annotation.user.add(user_will_be_updated)
+
                 except IntegrityError:
                     alert_flag = True
                     # return HttpResponseRedirect('medicles:index')
@@ -384,6 +401,11 @@ def add_annotation(request, article_id):
 
 
 def ajax_load_tag(request):
+    """
+    This function provides autocompletion for Wikidata tags.
+    When use starts typing on article detail page,
+    function will return the suggested Wikidata tags.
+    """
     if request.is_ajax():
         tag_query = request.GET.get('tag_query', '')
         tags = Wikidata.get_tag_data(Wikidata, tag_query)
@@ -395,6 +417,9 @@ def ajax_load_tag(request):
 
 
 def signup(request):
+    """
+    Provides basic signup functionality for users.
+    """
     if request.method == 'POST':
         form = SingupForm(request.POST)
         if form.is_valid():
@@ -480,11 +505,11 @@ def user_search_results(request):
     tags = Tag.objects.annotate(rank=SearchRank(search_vector_tag, search_term_updated_tag, cover_density=True)).filter(
         rank__gte=0.4).order_by('-rank')
     taggedUsers = getUsersFromTagId(tags)
-
     return render(request, 'medicles/user_search_results.html', {'users': users, 'taggedUsers': taggedUsers})
 
-
 # User Activity View
+
+
 def user_activity(request):
     user_from = request.user.id
     all_actions = Action.objects.filter(user_id=user_from)
@@ -519,7 +544,6 @@ def ajax_required(f):
     @ajax_required
     def my_view(request):
         ....
-
     """
 
     def wrap(request, *args, **kwargs):
@@ -536,16 +560,18 @@ def ajax_required(f):
 home_url = "http://localhost:8000"
 
 
-@ csrf_exempt
-@ ajax_required
-@ require_POST
-@ login_required
+@csrf_exempt
+@ajax_required
+@require_POST
+@login_required
 def user_follow(request):
-    print("Request.user: ", request.user, " User: ")
+    """
+    Provides User Following functionality.
+    User the mode USER from native django.contrib.auth.models
+    Writes actions to separate ACTIONS app as W3C standards suggests
+    """
     user_id = request.POST.get('id')
     action = request.POST.get('action')
-    print("User_id:", user_id)
-    print("Action", action)
 
     # Target user object gets using below query
     user = User.objects.get(id=user_id)
@@ -584,10 +610,15 @@ def user_follow(request):
             print(w3c_json)
 
             if action == 'follow':
+                Contact.objects.get_or_create(user_from=request.user,
+                                              user_to=user)
                 create_action(request.user, verb=1,
                               activity_json=w3c_json, target=user)
             else:
-                delete_action(request.user, 'is following', user)
+                print("I am here!!!")
+                Contact.objects.filter(user_from=request.user,
+                                       user_to=user).delete()
+                delete_action(request.user, verb=1, target=user)
             return JsonResponse({'status': 'ok'})
         except User.DoesNotExist:
             return JsonResponse({'status': 'error'})
@@ -597,20 +628,24 @@ def user_follow(request):
 def get_published_date():
     return str(datetime.datetime.now().isoformat())
 
-
 # Gets user id as input and returns user profile
+
+
 def get_user_profile_url(user_id):
     return home_url + "/user/" + str(user_id)
 
-
 # Gets user object as input and returns User's Full Name
+
+
 def get_user_fullname(user):
     return str(user.first_name + " " + user.last_name)
 
 
-# This function saves user activity of each user.
-# It is being used in search() function above.
 def user_search_activity(user, search_term):
+    """
+    This function saves user activity of each user.
+    It is being used in search() function above.
+    """
     if not user.is_anonymous:
         now = timezone.now()
         last_minute = now - datetime.timedelta(seconds=60)
@@ -652,28 +687,31 @@ def user_search_activity(user, search_term):
                       target=target_search)
     return True
 
-
 # Gets target search url used in activity json
+
+
 def get_target_search_url(id):
     return home_url + "/search/" + str(id)
 
-
 # Gets target search name used in activity json
+
+
 def get_target_search_name(id):
     search_obj = Search.objects.filter(id=id)
     print('Search object: ', search_obj)
     return search_obj[0].term
 
-
 # Gets target article url used in activity json
+
+
 def get_target_article_url(id):
     return home_url + "/article/" + str(id)
 
 
 @ csrf_exempt
 # @ajax_required
-@ require_POST
-@ login_required
+@require_POST
+@login_required
 def favourite_article(request, article_id):
     article = Article.objects.get(pk=article_id)
     user_updated = User.objects.get(pk=request.user.id)
@@ -754,3 +792,15 @@ def getUsersFromTagId(tags) -> list:
             userList.append(userList2[0])
 
     return userList
+
+
+def ajax_load_annotation(request):
+    if request.is_ajax():
+        articleId = request.GET.get("articleId")
+        objects_filter = AnnotationModel.objects.all()
+
+    results = []
+    for obj in objects_filter:
+        results.append(obj.annotation_json)
+
+    return JsonResponse(results, safe=False)
