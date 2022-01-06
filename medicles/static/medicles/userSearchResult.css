@@ -30,3 +30,14 @@
   width: 50%;
   padding: 10px;
 }
+
+.userResult {
+  padding-top: 30px;
+  width: 50%;
+  border: 5px solid gray;
+}
+
+.userSearchResults {
+    margin: auto;
+  width: 50%;
+}

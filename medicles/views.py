@@ -28,6 +28,8 @@ from actions.models import Action
 from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.core import serializers
+from django.db.models import Q
 
 
 # Create your views here.
@@ -35,7 +37,7 @@ from django.utils import timezone
 def index(request):
     """
     This function returns the home page of the application.
-    
+
     * If user logged in, it will return user activities as well.
     * If user is anonymous, it will just provide search bar.
     """
@@ -56,7 +58,7 @@ def index(request):
 
                 last_action = json.loads(action.action_json)
                 published_date = last_action['published']
-               
+
                 activity_published_date = datetime.datetime.strptime(published_date[:-7], '%Y-%m-%dT%H:%M:%S')
                 if activity_published_date > actor_user_last_login:
                     action_type = last_action['type']
@@ -79,9 +81,11 @@ def index(request):
         activities = new_activities
     return render(request, 'medicles/index.html', {'activities': activities})
 
+
 @csrf_exempt
 def advanced_search(request):
-    search_term = request.GET.get('term', None)
+    term = request.GET.get('term', None)
+    search_term = str(term).split()
     author = request.GET.get('author', None)
     start_date = request.GET.get('start_date')
     radio = request.GET.get('radio')
@@ -91,36 +95,41 @@ def advanced_search(request):
         start_date = "1960-01-01"
     if end_date == "":
         end_date = datetime.datetime.now()
-    if search_term != None:
-        if Article.objects.filter(author_list__icontains=author, pub_date__range=(start_date, end_date),
-                                  keyword_list__icontains=keyword).exists():
+    if term != None:
+        if Article.objects.filter(author_list__icontains=author, pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).exists():
             search_vector = SearchVector('keyword_list', weight='A') + SearchVector(
                 'article_title', weight='B') + SearchVector('article_abstract', weight='B')
             search_term_updated = SearchQuery(
-                search_term, search_type='websearch')
-            # articles = Article.objects.annotate(distance=TrigramDistance(
-            #     'keyword_list', search_term_updated)).filter(distance__lte=0.3).order_by('distance')
+                term, search_type='websearch')
             articles = Article.objects.annotate(search=SearchVector(
-                'keyword_list', 'article_title', 'article_abstract'), ).filter(search=SearchQuery(search_term))
+                'keyword_list', 'article_title', 'article_abstract'), ).filter(search=SearchQuery(term))
             Article_id = Annotation.objects.filter(
-                annotation_value__icontains=search_term).values('article_id')
+                annotation_key__icontains=term).values('article_id')
             list = []
             for i in Article_id:
                 id = i['article_id']
                 list.append(id)
+            if len(search_term) >= 2:
+                firstTerm = search_term[0]
+                secondTerm = search_term[1]
+            if len(search_term) < 2:
+                firstTerm = term
+                secondTerm = term
             noAnnotation = Article.objects.annotate(rank=SearchRank(
-                search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4,
-                                                                                article_title__icontains=search_term,
-                                                                                author_list__icontains=author,
-                                                                                pub_date__range=(
-                                                                                    start_date, end_date),
-                                                                                keyword_list__icontains=keyword).values()
+                search_vector, search_term_updated, cover_density=True)).filter(Q(rank__gte=0.4) &
+                                                                                Q(article_title__icontains=firstTerm) & Q(article_title__icontains=secondTerm) &
+                                                                                Q(author_list__icontains=author) &
+                                                                                Q(pub_date__range=(
+                                                                                    start_date, end_date)) &
+                                                                                Q(keyword_list__icontains=keyword)).values()
+
             articles = noAnnotation | Article.objects.annotate(rank=SearchRank(
                 search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4, article_id__in=list,
                                                                                 author_list__icontains=author,
                                                                                 pub_date__range=(
                                                                                     start_date, end_date),
                                                                                 keyword_list__icontains=keyword).values()
+
             page_number = request.GET.get('page', 1)
             try:
                 annotate = request.GET["annotation"]
@@ -137,47 +146,33 @@ def advanced_search(request):
                     articles = articles.order_by('pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
-                    return render(request, 'medicles/advanced_searchresults.html',
-                                  {'articles': articles, 'paginated_articles': paginated_articles,
-                                   'search_term': search_term, 'author': author, 'keywords': keyword,
-                                   'end_date': end_date,
-                                   'start_date': start_date, 'radio': radio, 'annotate': annotate})
-                # if request.GET["annotation"] and radio == "rank":
-                #     articles = articles.order_by('-rank')
-                #     return render(request, 'medicles/advanced_searchresults.html', {'articles': articles})
+                    return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
+                                                                                    'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
+                                                                                    'start_date': start_date, 'radio': radio, 'annotate': annotate})
+                else:
+                    return render(request, 'medicles/advanced_searchresults.html')
             except:
                 if radio == "desc":
                     articles = noAnnotation.order_by('-pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
-                    return render(request, 'medicles/advanced_searchresults.html',
-                                  {'articles': articles, 'paginated_articles': paginated_articles,
-                                   'search_term': search_term, 'author': author, 'keywords': keyword,
-                                   'end_date': end_date,
-                                   'start_date': start_date, 'radio': radio, 'paginate': paginate})
-                if radio == "asc":
+                    return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
+                                                                                    'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
+                                                                                    'start_date': start_date, 'radio': radio, 'paginate': paginate})
+                else:
                     articles = noAnnotation.order_by('pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
-                    return render(request, 'medicles/advanced_searchresults.html',
-                                  {'articles': articles, 'paginated_articles': paginated_articles,
-                                   'search_term': search_term, 'author': author, 'keywords': keyword,
-                                   'end_date': end_date,
-                                   'start_date': start_date, 'radio': radio, 'paginate': paginate})
-                # else:
-                #     articles = noAnnotation.order_by('-rank')
-                #     return render(request, 'medicles/search_results.html', {'articles': articles})
+                    return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
+                                                                                    'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
+                                                                                    'start_date': start_date, 'radio': radio, 'paginate': paginate})
 
         else:
             failure = "There is no articles between these dates. Please consider changing the Date Field."
             return render(request, 'medicles/advanced_search.html', {'failure': failure})
-            # if request.is_ajax():
-    #     text = request.GET.get('term')
-    #     articles = Article.objects.filter(
-    #         article_title__icontains=text).values()
-    #     return JsonResponse({'articles': articles})
     else:
         return render(request, 'medicles/advanced_search.html')
+
 
 def search(request):
     """
@@ -203,10 +198,11 @@ def search(request):
         search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4).order_by('-rank')
     print("mainsearch")
 
+    # paginate result object in bundles of 20 articles
     paginate = Paginator(articles, 20)
-    print('x', paginate)
-
+    # set default page as 1 and get the desired page number from request
     page_number = request.GET.get('page', 1)
+    # select objects realted to the specified page number
     paginated_articles = paginate.get_page(page_number)
 
     search_obj = Search(user=request.user.id, term=search_term)
@@ -216,6 +212,7 @@ def search(request):
 
     return render(request, 'medicles/search_results.html',
                   {'articles': articles, 'paginated_articles': paginated_articles, 'search_term': search_term})
+
 
 def detail(request, article_id):
     """
@@ -237,13 +234,19 @@ def detail(request, article_id):
 
     else:
         alert_flag = False
+
     alreadyFavourited = False
-    if FavouriteListTable.objects.filter(article=article).exists():
-        if FavouriteListTable.objects.filter(user=request.user.id).exists():
-            alreadyFavourited = True
+    # AlreadyFavourited checks whether the user has favourites the article previously.
+    # If the article PMID exists under the user in FavouriteListTables then the article being viewed has been previously favourited
+    # This variable is passed to the template to display the correct button to the user
+
+    if FavouriteListTable.objects.filter(article=article).exists() and FavouriteListTable.objects.filter(
+            user=request.user.id).exists():
+        alreadyFavourited = True
 
     return render(request, 'medicles/detail.html',
                   {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
+
 
 @ login_required
 def add_tag(request, article_id):
@@ -413,6 +416,7 @@ def add_annotation(request, article_id):
 
     return alert_flag
 
+
 def ajax_load_tag(request):
     """
     This function provides autocompletion for Wikidata tags.
@@ -427,6 +431,7 @@ def ajax_load_tag(request):
             'tags': tags,
         }
         return JsonResponse(data)
+
 
 def signup(request):
     """
@@ -446,6 +451,7 @@ def signup(request):
         print("not working")
         form = SingupForm()
     return render(request, 'medicles/signup.html', {'form': form})
+
 
 def profile(request, user_id):
     user = User.objects.get(pk=user_id)
@@ -471,9 +477,27 @@ def profile(request, user_id):
         print(tag1.id)
         print(article1.article_id)
 
+    # retrive the users favourited article in terms of article_id (PMID) from the FavouriteListTable
+    users_favourite_list = FavouriteListTable.objects.filter(user=user.id, )
+    print(users_favourite_list)
+    # The favorited article_id (PMID) are utilized the to filter Article objects and
+    # get a query set of favourited article objects from Article table
+    article_id_list = []
+    for object in users_favourite_list:
+        article_id_list.append(object.article_id)
+    users_favourite_articles = Article.objects.filter(article_id__in=article_id_list)
+
+    # paginate result object in bundles of 5
+    paginate = Paginator(users_favourite_articles, 5)
+    # set default page as 1 and get the desired page number from request
+    page_number = request.GET.get('page', 1)
+    # select objects realted to the specified page number
+    paginated_favourite_articles = paginate.get_page(page_number)
+
     return render(request, 'medicles/profile.html',
                   {'user': user, 'tags': tags, 'mostPopularTags': returnedTags, 'followerCount': followerCount,
-                   'followingCount': followingCount, 'returnedTagArticles': returnedTagArticles})
+                   'followingCount': followingCount, 'returnedTagArticles': returnedTagArticles,
+                   'paginated_favourite_articles': paginated_favourite_articles}, )
 
 
 def getReturnedTags(mostPopularTags, tags):
@@ -498,6 +522,7 @@ def getArticlesFromTagId(tags):
 def user_search(request):
     return render(request, 'medicles/user_search.html')
 
+
 def user_search_results(request):
     search_term = request.GET.get('name', None)
     search_term_tag = request.GET.get('tags', None)
@@ -517,6 +542,8 @@ def user_search_results(request):
     return render(request, 'medicles/user_search_results.html', {'users': users, 'taggedUsers': taggedUsers})
 
 # User Activity View
+
+
 def user_activity(request):
     user_from = request.user.id
     all_actions = Action.objects.filter(user_id=user_from)
@@ -565,7 +592,6 @@ def ajax_required(f):
 
 # Used in W3C_JSON variable in activity functions
 home_url = "http://localhost:8000"
-
 
 
 @csrf_exempt
@@ -632,14 +658,19 @@ def user_follow(request):
             return JsonResponse({'status': 'error'})
     return JsonResponse({'status': 'error'})
 
+
 def get_published_date():
     return str(datetime.datetime.now().isoformat())
 
 # Gets user id as input and returns user profile
+
+
 def get_user_profile_url(user_id):
     return home_url + "/user/" + str(user_id)
 
 # Gets user object as input and returns User's Full Name
+
+
 def get_user_fullname(user):
     return str(user.first_name + " " + user.last_name)
 
@@ -691,16 +722,22 @@ def user_search_activity(user, search_term):
     return True
 
 # Gets target search url used in activity json
+
+
 def get_target_search_url(id):
     return home_url + "/search/" + str(id)
 
 # Gets target search name used in activity json
+
+
 def get_target_search_name(id):
     search_obj = Search.objects.filter(id=id)
     print('Search object: ', search_obj)
     return search_obj[0].term
 
 # Gets target article url used in activity json
+
+
 def get_target_article_url(id):
     return home_url + "/article/" + str(id)
 
@@ -710,6 +747,8 @@ def get_target_article_url(id):
 @require_POST
 @login_required
 def favourite_article(request, article_id):
+
+    # determine article and user objects
     article = Article.objects.get(pk=article_id)
     user_updated = User.objects.get(pk=request.user.id)
 
@@ -743,10 +782,11 @@ def favourite_article(request, article_id):
     })
     print(w3c_json)
 
-    # remove user and article id info from favouriteListTable in database
+    # Remove user and article id info from favouriteListTable in database and delete the action
     if FavouriteListTable.objects.filter(article=article).exists() and FavouriteListTable.objects.filter(
             user=request.user.id).exists():
 
+        #find the related object in db
         favourite = FavouriteListTable.objects.filter(
             article=article, user=user_updated)
         favourite.delete()
@@ -756,11 +796,13 @@ def favourite_article(request, article_id):
 
     # save and link user and article id in database
     else:
+        # create a new FavouriteListTable object passing the related objects
         favourite = FavouriteListTable(article=article, user=user_updated)
         favourite.save()
 
         # Create action for favorite article by specific user
-        create_action(user=user_updated, verb=4, activity_json=w3c_json, target=article)
+        create_action(user=user_updated, verb=4,
+                      activity_json=w3c_json, target=article)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 

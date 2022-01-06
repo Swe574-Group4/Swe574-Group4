@@ -62,14 +62,11 @@ class ViewTests(TestCase):
         c = Client()
         url = '/advanced_search/'
         data = {'term': 'reflux', 'author': '', 'start_date': '2021-09-16',
-                'end_date': '', 'radio': '', 'keywords': ''}
+                'end_date': '', 'radio': 'desc', 'keywords': ''}
         invaliddata = {'term': 'reflux', 'author': '', 'start_date': '2022-12-31',
                        'end_date': '2022-01-01', 'radio': '', 'keywords': ''}
-        # http://0.0.0.0:8000/advanced_search/?term=reflux&author=Alex&start_date=2021-09-16&end_date=&radio=desc&keywords=
-        response = c.post(url, data)
-        print("Response 1:", response.context)
-        invalidresponse = c.post(url, invaliddata)
-        print("Response 2:", invaliddata.context)
+        response = c.get(url, data)
+        invalidresponse = c.get(url, invaliddata)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
             'article_id' in response.context['articles'][0])
