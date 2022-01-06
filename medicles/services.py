@@ -36,12 +36,8 @@ def get_articles_with_details(term, retmax, retmax_iter):
     i = 0
 
     while i < (len(articles)):
-        # print("i: ", i, "articles[", i, ":", i+retmax, "]")
-        # print(articles[i:i+retmax])
         articles_id = ','.join(articles[i:i+retmax])
-        # print(articles_id)
         i +=retmax
-
 
         url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id="+articles_id+"&rettype=abstract"
         #print(url)
@@ -56,8 +52,6 @@ def get_articles_with_details(term, retmax, retmax_iter):
         except Exception as e:
             print("ET Exception: ", e)
             continue
-
-
 
         # 'PubmedArticle/MedlineCitation' will find each article.
         # Using each article we will find PMID, Title, Abstract and Authors 
@@ -84,7 +78,6 @@ def get_articles_with_details(term, retmax, retmax_iter):
                     author_name = author.find('LastName').text + " " + author.find('ForeName').text + ";"
                     author_list += author_name
                 author_list = author_list.strip(';')
-                #print(author_list)
             except Exception as e:
                 print("AL Exception: ", e)
                 continue
@@ -98,19 +91,6 @@ def get_articles_with_details(term, retmax, retmax_iter):
             except Exception as e:
                 print("KL Exception: ", e)
                 continue
-
-
-            # try:
-            #     pubdate = ""
-            #     for date in title.findall('MedlineCitation/Article/Journal/JournalIssue/PubDate'):
-            #         year = str(date.find('Year').text)
-            #         month = str(datetime.datetime.strptime(str(date.find('Month').text), '%b').month)
-            #         day = str(date.find("Day").text)
-            #         pubdate = year + "/" + month + "/" + day + " 00:00"
-            #         pubdate = datetime.datetime.strptime(pubdate, '%Y/%m/%d %H:%M')
-            # except Exception as e:
-            #     print("PD Exception: ", e)
-            #     continue
             
             try:
                 pubdate = ""
@@ -132,10 +112,8 @@ def get_articles_with_details(term, retmax, retmax_iter):
                 print("Pub Date Exception: ", e)
                 continue
 
-            #print(pubdate)
             # For each article, Put id, title and abstract_all and author_list into an array. 
             each_article_row = [id, pubdate, article_title, abstract_all, author_list, keyword_list]
-            #print(each_article_row)
             # Append this into "all_articles" list. This will create 2D list.
             # all _articles = [[id1, title1, abstract1, author_list1],
             #                  [id2, title2, abstract2, author_list2]]
@@ -150,30 +128,6 @@ def create_db(term, retmax, retmax_iter):
     for art in articles:
         if art[2]:
             cleaned_articles.append(art)
-
-    # for i in range(len(articles)):
-    #     try:
-    #         if articles[i][2]:
-    #             Article.objects.create(article_id = articles[i][0],
-    #             pub_date = articles[i][1],
-    #             article_title = articles[i][2],
-    #             article_abstract = articles[i][3],
-    #             author_list = articles[i][4],
-    #             keyword_list = articles[i][5],
-    #             )
-    #     except IntegrityError:
-    #         pass
-
-    # for art in articles:
-    #     try:
-    #         Article(article_id=art[0],
-    #         pub_date=art[1],
-    #        article_title=art[2],
-    #        article_abstract = art[3],
-    #        author_list = art[4],
-    #        keyword_list = art[5]).save()
-    #     except IntegrityError:
-    #         pass
     
     start_index = 0
     end_index = 5000
@@ -207,7 +161,7 @@ def create_db(term, retmax, retmax_iter):
     query_result = Article.objects.all()
 
     return query_result
-#print(create_db())
+
 
 def update_db(term, retmax):
     latest_article_id = Article.objects.latest('article_id').article_id
@@ -224,13 +178,7 @@ def update_db(term, retmax):
     
     query_result = Article.objects.all()
     return query_result
-#update_db()
 
-# from medicles.models import Article 
-# from medicles import services
-# db = services 
-# db.create_db('stress disorder',60000,400)
-# db.get_articles_from_db() 
 
 class Wikidata():
     def get_wikidata_url_by_name(term):
@@ -259,11 +207,3 @@ class Wikidata():
                 )
                 print('label:', tag['label'], 'url:', tag['concepturi'])
 '''
-
-
-
-# from medicles.services import Wikidata
-# a=Wikidata
-# b=a.get_wikidata_url_by_name('covid 19')
-# b=Wikidata.create_tag_data(Wikidata, 'covid')
-# b=Wikidata.get_tag_data(Wikidata, 'traumatic')
