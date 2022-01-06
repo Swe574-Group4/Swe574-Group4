@@ -234,9 +234,8 @@
                 {% endfor %}
             </p>
 
-            <button type="button" style="background: none; border: none" class="collapsible icon w3-text-teal">Show
-                Previous
-                Annotations
+            <button type="button" style="background: none; border: none" class="collapsible icon w3-text-teal">
+                Click the items below in to see annotation details
             </button>
             <div class="content">
                 <ul id="annotation_list_view">
@@ -421,6 +420,7 @@
     function switchToTagging() {
         document.getElementById('tag-division').hidden = false
         document.getElementById('annotate-division').hidden = true
+        showAllAnnotatedItems()
     }
 
     function switchToAnnotation() {
@@ -444,7 +444,7 @@
                         annotationList.push(item)
                     }
                 }
-                //highlightAnnotatedPart()
+                showAllAnnotatedItems()
                 showAnnotationList()
             }
         });
@@ -472,6 +472,7 @@
         let li = target.closest('li'); // get reference
         let nodes = Array.from(li.closest('ul').children); // get array
         let index = nodes.indexOf(li);
+        hideAllAnnotatedItems()
         showAnnotationValues(index, nodes[index].innerText)
     };
 
@@ -480,7 +481,7 @@
     function showAnnotationValues(index, annotated_text) {
         document.getElementById("annotationInfo-division").hidden = false
         document.getElementById("article-division").setAttribute("style", "width:1000px")
-
+        document.getElementById("annotationBT").disabled = true
         // set annotation box values
 
         let item = annotationList[index]
@@ -505,6 +506,8 @@
         document.getElementById("articleAbstract").innerHTML = document.getElementById("articleAbstractCopy").innerHTML
         document.getElementById("annotationInfo-division").hidden = true
         document.getElementById("article-division").setAttribute("style", "width:fit-content");
+        document.getElementById("annotationBT").disabled = false
+        switchToTagging()
     }
 
 
@@ -590,6 +593,80 @@
             });
         });
     });
+
+    function showAllAnnotatedItems() {
+
+        let articleAbstractWholeText = document.getElementById("articleAbstract").textContent.trim()
+        let textTokenArray = articleAbstractWholeText.split(' ');
+        let textTokenPositionArray = []
+
+        for (let i = 0; i < textTokenArray.length; i++) {
+            let start = 0
+            if (i !== 0) {
+                start = textTokenPositionArray[i - 1][1] + 1
+            }
+            let end = textTokenArray[i].length + start
+            let position_array = [start, end]
+            textTokenPositionArray.push(position_array)
+        }
+
+
+        if (annotationList.length !== 0) {
+
+            let annotatedTokenIndices = []
+
+            for (let i = 0; i < annotationList.length; i++) {
+                let indicesForCurrentAnnotation = findAnnotatedTokenIndices(annotationList[i], textTokenPositionArray, textTokenArray)
+                annotatedTokenIndices.push(indicesForCurrentAnnotation)
+            }
+
+            let annotatedAbstract = "";
+            for (let i = 0; i < textTokenArray.length; i++) {
+                let isAnnotatedTokenIndex = false;
+                for (let outer of annotatedTokenIndices) {
+                    if (outer.includes(i)) {
+
+                        let currentBeAnnotatedText = "";
+                        for (let inner of outer) {
+                            currentBeAnnotatedText += textTokenArray[inner] + " ";
+                        }
+                        annotatedAbstract += "<span style='background: yellow'>" + currentBeAnnotatedText + "</span>";
+                        i = outer[outer.length - 1];
+                        isAnnotatedTokenIndex = true;
+                        break;
+                    }
+                }
+
+                if (!isAnnotatedTokenIndex) {
+                    annotatedAbstract += textTokenArray[i] + " "
+                }
+            }
+
+            document.getElementById("articleAbstract").innerHTML = annotatedAbstract
+        }
+    }
+
+    function findAnnotatedTokenIndices(currentAnnotation, textTokenPositionArray, textTokenArray) {
+
+        let indicesList = []
+        let annotationStart = currentAnnotation.target.selector.start
+        let annotationEnd = currentAnnotation.target.selector.end
+
+        for (let j = 0; j < textTokenPositionArray.length; j++) {
+            let tempIndexStart = textTokenPositionArray[j][0]
+            let tempIndexEnd = textTokenPositionArray[j][1]
+
+            if (annotationStart <= tempIndexStart && (parseInt(annotationEnd) + 1) >= tempIndexEnd) {
+                indicesList.push(j)
+            }
+        }
+
+        return indicesList
+    }
+
+    function hideAllAnnotatedItems() {
+        document.getElementById("articleAbstract").innerHTML = document.getElementById("articleAbstractCopy").innerHTML
+    }
 
 
 </script>
