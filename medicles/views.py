@@ -31,6 +31,7 @@ from django.views.decorators.csrf import csrf_exempt
 import datetime
 from django.utils import timezone
 from django.core import serializers
+from django.db.models import Q
 
 # Create your views here.
 
@@ -47,7 +48,7 @@ def index(request):
             user_actions = Action.objects.filter(user_id=user.user_id)
             for action in user_actions:
                 print(action.action_json)
-            #deserialized = serializers.deserialize('json', user.action_json)
+            # deserialized = serializers.deserialize('json', user.action_json)
                 print(json.loads(action.action_json)['published'])
                 last_action = json.loads(action.action_json)
                 published_date = last_action['published']
@@ -85,7 +86,8 @@ def index(request):
 # to go back
 
 def advanced_search(request):
-    search_term = request.GET.get('term', None)
+    term = request.GET.get('term', None)
+    search_term = str(term).split()
     author = request.GET.get('author', None)
     start_date = request.GET.get('start_date')
     radio = request.GET.get('radio')
@@ -95,33 +97,41 @@ def advanced_search(request):
         start_date = "1960-01-01"
     if end_date == "":
         end_date = datetime.datetime.now()
-    if search_term != None:
+    if term != None:
         if Article.objects.filter(author_list__icontains=author, pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).exists():
             search_vector = SearchVector('keyword_list', weight='A') + SearchVector(
                 'article_title', weight='B') + SearchVector('article_abstract', weight='B')
             search_term_updated = SearchQuery(
-                search_term, search_type='websearch')
+                term, search_type='websearch')
             articles = Article.objects.annotate(search=SearchVector(
-                'keyword_list', 'article_title', 'article_abstract'), ).filter(search=SearchQuery(search_term))
+                'keyword_list', 'article_title', 'article_abstract'), ).filter(search=SearchQuery(term))
             Article_id = Annotation.objects.filter(
-                annotation_value__icontains=search_term).values('article_id')
+                annotation_key__icontains=term).values('article_id')
             list = []
             for i in Article_id:
                 id = i['article_id']
                 list.append(id)
+            if len(search_term) >= 2:
+                firstTerm = search_term[0]
+                secondTerm = search_term[1]
+            if len(search_term) < 2:
+                firstTerm = term
+                secondTerm = term
             noAnnotation = Article.objects.annotate(rank=SearchRank(
-                search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4,
-                                                                                article_title__icontains=search_term,
-                                                                                author_list__icontains=author,
-                                                                                pub_date__range=(
-                                                                                    start_date, end_date),
-                                                                                keyword_list__icontains=keyword).values()
+                search_vector, search_term_updated, cover_density=True)).filter(Q(rank__gte=0.4) &
+                                                                                Q(article_title__icontains=firstTerm) & Q(article_title__icontains=secondTerm) &
+                                                                                Q(author_list__icontains=author) &
+                                                                                Q(pub_date__range=(
+                                                                                    start_date, end_date)) &
+                                                                                Q(keyword_list__icontains=keyword)).values()
+
             articles = noAnnotation | Article.objects.annotate(rank=SearchRank(
                 search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4, article_id__in=list,
                                                                                 author_list__icontains=author,
                                                                                 pub_date__range=(
                                                                                     start_date, end_date),
                                                                                 keyword_list__icontains=keyword).values()
+
             page_number = request.GET.get('page', 1)
             try:
                 annotate = request.GET["annotation"]
