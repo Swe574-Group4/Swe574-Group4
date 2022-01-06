@@ -140,9 +140,6 @@
 
     {% for user in users %}
         <div class="w3-container w3-margin-right w3-margin-left">
-            <p> {{ request.user }} </p>
-            <p> {{ user.actions.all }} </p>
-            <p> {{ user.id|follow:request.user }} </p>
 
             {% if request.user == user.actions.all.3.user %} Yes {% endif %}
             <h3 style="display:inline" class="w3-text-teal " id="userName"><a href="{% url 'medicles:profile' user.id%}">{{ user.first_name }} {{ user.last_name }}</a></h3>

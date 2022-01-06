@@ -449,7 +449,7 @@ def signup(request):
 
 def profile(request, user_id):
     user = User.objects.get(pk=user_id)
-    followerCount = Action.objects.filter(user_id=user.id, verb=1).count()
+    followerCount = Action.objects.filter(target_id=user.id, verb=1).count()
     followingCount = Action.objects.filter(user_id=user.id, verb=1).count()
 
     tags = []
