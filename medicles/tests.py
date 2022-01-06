@@ -5,6 +5,8 @@ from .models import Article, Tag
 from medicles import services
 import datetime
 from django.urls import reverse
+
+
 # Create your tests here.
 
 
@@ -42,8 +44,8 @@ class ViewTests(TestCase):
         url = '/search/'
         data = {'q': 'covid'}
         response = c.get(url, data)
-        #print('myResponse', response.context['articles'][0])
-        #print('Count: ', len(response.context['articles']))
+        # print('myResponse', response.context['articles'][0])
+        # print('Count: ', len(response.context['articles']))
         self.assertEqual(response.status_code, 200)
         self.assertTrue('articles' in response.context)
         # TODO Correct below assertion. It should be greater than or equal to 10.
