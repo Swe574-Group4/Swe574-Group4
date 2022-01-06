@@ -3,6 +3,7 @@ from .models import Search
 import datetime
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+import hashlib
 
 import psycopg2
 from django.contrib.auth import authenticate, login
@@ -13,13 +14,15 @@ from django.db import IntegrityError
 
 from django.shortcuts import redirect, render, get_object_or_404, get_list_or_404
 
+from annotations.models import AnnotationModel
+from annotations.utils import save_annotation_json
 from medicles.forms import AnnotationForm
 from medicles.models import Article, Tag, Annotation, FavouriteListTable
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
+from django.core import serializers
 from django.core.paginator import Paginator, EmptyPage
 from collections import Counter
-
 
 from actions.utils import create_action, delete_action
 from django.http import JsonResponse
@@ -31,6 +34,7 @@ from django.views.decorators.csrf import csrf_exempt
 import datetime
 from django.utils import timezone
 from django.core import serializers
+
 
 # Create your views here.
 
@@ -47,23 +51,23 @@ def index(request):
             user_actions = Action.objects.filter(user_id=user.user_id)
             for action in user_actions:
                 print(action.action_json)
-            #deserialized = serializers.deserialize('json', user.action_json)
+                # deserialized = serializers.deserialize('json', user.action_json)
                 print(json.loads(action.action_json)['published'])
                 last_action = json.loads(action.action_json)
                 published_date = last_action['published']
                 activity_published_date = datetime.datetime.strptime(published_date[:-7], '%Y-%m-%dT%H:%M:%S')
                 if activity_published_date < actor_user_last_login:
                     action_type = last_action['type']
-                    action_actor_name= last_action['actor']['name']
+                    action_actor_name = last_action['actor']['name']
                     action_actor_url = last_action['actor']['url']
                     action_object_name = last_action['object']['name']
                     action_object_url = last_action['object']['url']
-                    activities.append([ action_type,
-                                        action_actor_name,
-                                        action_actor_url,
-                                        action_object_name,
-                                        action_object_url
-                                        ])
+                    activities.append([action_type,
+                                       action_actor_name,
+                                       action_actor_url,
+                                       action_object_name,
+                                       action_object_url
+                                       ])
                     print("Date is ", True)
     return render(request, 'medicles/index.html', {'activities': activities})
 
@@ -96,7 +100,8 @@ def advanced_search(request):
     if end_date == "":
         end_date = datetime.datetime.now()
     if search_term != None:
-        if Article.objects.filter(author_list__icontains=author, pub_date__range=(start_date, end_date), keyword_list__icontains=keyword).exists():
+        if Article.objects.filter(author_list__icontains=author, pub_date__range=(start_date, end_date),
+                                  keyword_list__icontains=keyword).exists():
             search_vector = SearchVector('keyword_list', weight='A') + SearchVector(
                 'article_title', weight='B') + SearchVector('article_abstract', weight='B')
             search_term_updated = SearchQuery(
@@ -131,16 +136,20 @@ def advanced_search(request):
                     articles = articles.order_by('-pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
-                    return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
-                                                                                    'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
-                                                                                    'start_date': start_date, 'radio': radio, 'annotate': annotate})
+                    return render(request, 'medicles/advanced_searchresults.html',
+                                  {'articles': articles, 'paginated_articles': paginated_articles,
+                                   'search_term': search_term, 'author': author, 'keywords': keyword,
+                                   'end_date': end_date,
+                                   'start_date': start_date, 'radio': radio, 'annotate': annotate})
                 if annotate and radio == "asc":
                     articles = articles.order_by('pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
-                    return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
-                                                                                    'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
-                                                                                    'start_date': start_date, 'radio': radio, 'annotate': annotate})
+                    return render(request, 'medicles/advanced_searchresults.html',
+                                  {'articles': articles, 'paginated_articles': paginated_articles,
+                                   'search_term': search_term, 'author': author, 'keywords': keyword,
+                                   'end_date': end_date,
+                                   'start_date': start_date, 'radio': radio, 'annotate': annotate})
                 # if request.GET["annotation"] and radio == "rank":
                 #     articles = articles.order_by('-rank')
                 #     return render(request, 'medicles/advanced_searchresults.html', {'articles': articles})
@@ -149,16 +158,20 @@ def advanced_search(request):
                     articles = noAnnotation.order_by('-pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
-                    return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
-                                                                                    'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
-                                                                                    'start_date': start_date, 'radio': radio, 'paginate': paginate})
+                    return render(request, 'medicles/advanced_searchresults.html',
+                                  {'articles': articles, 'paginated_articles': paginated_articles,
+                                   'search_term': search_term, 'author': author, 'keywords': keyword,
+                                   'end_date': end_date,
+                                   'start_date': start_date, 'radio': radio, 'paginate': paginate})
                 if radio == "asc":
                     articles = noAnnotation.order_by('pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
-                    return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
-                                                                                    'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
-                                                                                    'start_date': start_date, 'radio': radio, 'paginate': paginate})
+                    return render(request, 'medicles/advanced_searchresults.html',
+                                  {'articles': articles, 'paginated_articles': paginated_articles,
+                                   'search_term': search_term, 'author': author, 'keywords': keyword,
+                                   'end_date': end_date,
+                                   'start_date': start_date, 'radio': radio, 'paginate': paginate})
                 # else:
                 #     articles = noAnnotation.order_by('-rank')
                 #     return render(request, 'medicles/search_results.html', {'articles': articles})
@@ -206,7 +219,8 @@ def search(request):
 
     user_search_activity(request.user, search_term)
 
-    return render(request, 'medicles/search_results.html', {'articles': articles, 'paginated_articles': paginated_articles, 'search_term': search_term})
+    return render(request, 'medicles/search_results.html',
+                  {'articles': articles, 'paginated_articles': paginated_articles, 'search_term': search_term})
 
 
 def detail(request, article_id):
@@ -232,7 +246,7 @@ def detail(request, article_id):
                   {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
 
 
-@ login_required
+@login_required
 def add_tag(request, article_id):
     alert_flag = False
     if request.method == 'POST':
@@ -314,12 +328,11 @@ def add_tag(request, article_id):
     return alert_flag
 
 
-@ login_required
+@login_required
 def add_annotation(request, article_id):
     alert_flag = False
     if request.method == 'POST':
         form = AnnotationForm(request.POST)
-
         annotation_request_from_browser = ''
         if form.is_valid():
 
@@ -348,29 +361,39 @@ def add_annotation(request, article_id):
                         "type": "Annotation",
                         "body": {
                             "type": "TextualBody",
-                            "purpose": "Tagging",
-                            "value": annotation_input
+                            "purpose": "tagging",
+                            "value": annotation_input,
+                            "format": "text/plain"
                         },
                         "target": {
-                            "source": user_def_annotation_key,
+                            "source": f'http://localhost:8000/article/{article_id}',
                             "selector": {
                                 "type": "TextPositionSelector",
                                 "start": startIndex,
                                 "end": endIndex
-                            }
+                            },
+                            "text": user_def_annotation_key
+                        },
+                        "creator": {
+                            "id": request.user.id,
+                            "type": "Person",
+                            "name": str(request.user),
+                            "nickname": "pseudo",
+                            "email_sha1": request.user.email
                         },
                         "created": str(datetime.datetime.now().date())
                     }
+                    save_annotation_json(w3c_jsonld_annotation, article_id)
 
                     print(w3c_jsonld_annotation)
-                    annotation = Annotation(annotation_key=user_def_annotation_key,
-                                            annotation_value=annotation_input,
-                                            annotation_json=w3c_jsonld_annotation,
-                                            article_id=article_id
-                                            )
-                    annotation.save()
-                    annotation.article.add(article_will_be_updated)
-                    annotation.user.add(user_will_be_updated)
+                    # annotation = Annotation(annotation_key=user_def_annotation_key,
+                    #                       annotation_value=annotation_input,
+                    #                      annotation_json=w3c_jsonld_annotation
+                    #                       )
+                    # annotation.save()
+                    # annotation.article.add(article_will_be_updated)
+                    # annotation.user.add(user_will_be_updated)
+
                 except IntegrityError:
                     alert_flag = True
                     # return HttpResponseRedirect('medicles:index')
@@ -414,8 +437,8 @@ def signup(request):
 
 def profile(request, user_id):
     user = User.objects.get(pk=user_id)
-    followerCount= Action.objects.filter(user_id=user.id, verb=1).count()
-    followingCount= Action.objects.filter(user_id=user.id, verb=1).count()
+    followerCount = Action.objects.filter(user_id=user.id, verb=1).count()
+    followingCount = Action.objects.filter(user_id=user.id, verb=1).count()
 
     tags = []
     try:
@@ -436,7 +459,6 @@ def profile(request, user_id):
         print(tag1.id)
         print(article1.article_id)
 
-
     return render(request, 'medicles/profile.html',
                   {'user': user, 'tags': tags, 'mostPopularTags': returnedTags, 'followerCount': followerCount,
                    'followingCount': followingCount, 'returnedTagArticles': returnedTagArticles})
@@ -450,6 +472,7 @@ def getReturnedTags(mostPopularTags, tags):
                 returnedTags.append(tag)
     return returnedTags
 
+
 def getArticlesFromTagId(tags):
     articles = {}
     sql2 = 'select * from medicles_article where article_id = (select article_id from medicles_tag_article where tag_id = %s)'
@@ -459,6 +482,7 @@ def getArticlesFromTagId(tags):
             articles[tag1] = articleList[0]
 
     return articles
+
 
 def user_search(request):
     return render(request, 'medicles/user_search.html')
@@ -536,10 +560,10 @@ def ajax_required(f):
 home_url = "http://localhost:8000"
 
 
-@ csrf_exempt
-@ ajax_required
-@ require_POST
-@ login_required
+@csrf_exempt
+@ajax_required
+@require_POST
+@login_required
 def user_follow(request):
     print("Request.user: ", request.user, " User: ")
     user_id = request.POST.get('id')
@@ -647,10 +671,9 @@ def user_search_activity(user, search_term):
         })
         # print(w3c_json)
 
-
         # Create action for search term for a specific user
         create_action(user=user, verb=3, activity_json=w3c_json,
-                    target=target_search)
+                      target=target_search)
     return True
 
 
@@ -671,10 +694,10 @@ def get_target_article_url(id):
     return home_url + "/article/" + str(id)
 
 
-@ csrf_exempt
+@csrf_exempt
 # @ajax_required
-@ require_POST
-@ login_required
+@require_POST
+@login_required
 def favourite_article(request, article_id):
     article = Article.objects.get(pk=article_id)
     user_updated = User.objects.get(pk=request.user.id)
@@ -754,3 +777,15 @@ def getUsersFromTagId(tags) -> list:
             userList.append(userList2[0])
 
     return userList
+
+
+def ajax_load_annotation(request):
+    if request.is_ajax():
+        articleId = request.GET.get("articleId")
+        objects_filter = AnnotationModel.objects.all()
+
+    results = []
+    for obj in objects_filter:
+        results.append(obj.annotation_json)
+
+    return JsonResponse(results, safe=False)
