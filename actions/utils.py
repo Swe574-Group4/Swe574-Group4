@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from .models import Action
 
 
+
 def create_action(user, verb,  activity_json, target=None):
     """
     Helper function to create actions regardless of the application.
@@ -18,15 +19,15 @@ def create_action(user, verb,  activity_json, target=None):
                                             created__gte=last_minute)
     if target:
         target_ct = ContentType.objects.get_for_model(target)
-        print('target_ct',target_ct)
-        if 'article' in str(target_ct) :
+        print('target_ct', target_ct)
+        if 'article' in str(target_ct):
 
             similar_actions = similar_actions.filter(target_ct=target_ct,
                                                      target_id=target.article_id)
         else:
 
             similar_actions = similar_actions.filter(target_ct=target_ct,
-                                                 target_id=target.id)
+                                                     target_id=target.id)
     if not similar_actions:
         # no existing actions found
         action = Action(user=user, verb=verb, target=target, action_json=activity_json)
