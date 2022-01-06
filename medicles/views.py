@@ -187,10 +187,11 @@ def search(request):
         search_vector, search_term_updated, cover_density=True)).filter(rank__gte=0.4).order_by('-rank')
     print("mainsearch")
 
+    # paginate result object in bundles of 20 articles
     paginate = Paginator(articles, 20)
-    print('x', paginate)
-
+    # set default page as 1 and get the desired page number from request
     page_number = request.GET.get('page', 1)
+    # select objects realted to the specified page number
     paginated_articles = paginate.get_page(page_number)
 
     search_obj = Search(user=request.user.id, term=search_term)
@@ -222,10 +223,15 @@ def detail(request, article_id):
 
     else:
         alert_flag = False
+
     alreadyFavourited = False
-    if FavouriteListTable.objects.filter(article=article).exists():
-        if FavouriteListTable.objects.filter(user=request.user.id).exists():
-            alreadyFavourited = True
+    # AlreadyFavourited checks whether the user has favourites the article previously.
+    # If the article PMID exists under the user in FavouriteListTables then the article being viewed has been previously favourited
+    # This variable is passed to the template to display the correct button to the user
+
+    if FavouriteListTable.objects.filter(article=article).exists() and FavouriteListTable.objects.filter(
+            user=request.user.id).exists():
+        alreadyFavourited = True
 
     return render(request, 'medicles/detail.html',
                   {'article': article, 'alert_flag': alert_flag, 'alreadyFavourited': alreadyFavourited})
@@ -458,9 +464,27 @@ def profile(request, user_id):
         print(tag1.id)
         print(article1.article_id)
 
+    # retrive the users favourited article in terms of article_id (PMID) from the FavouriteListTable
+    users_favourite_list = FavouriteListTable.objects.filter(user=user.id, )
+    print(users_favourite_list)
+    # The favorited article_id (PMID) are utilized the to filter Article objects and
+    # get a query set of favourited article objects from Article table
+    article_id_list = []
+    for object in users_favourite_list:
+        article_id_list.append(object.article_id)
+    users_favourite_articles = Article.objects.filter(article_id__in=article_id_list)
+
+    # paginate result object in bundles of 5
+    paginate = Paginator(users_favourite_articles, 5)
+    # set default page as 1 and get the desired page number from request
+    page_number = request.GET.get('page', 1)
+    # select objects realted to the specified page number
+    paginated_favourite_articles = paginate.get_page(page_number)
+
     return render(request, 'medicles/profile.html',
                   {'user': user, 'tags': tags, 'mostPopularTags': returnedTags, 'followerCount': followerCount,
-                   'followingCount': followingCount, 'returnedTagArticles': returnedTagArticles})
+                   'followingCount': followingCount, 'returnedTagArticles': returnedTagArticles,
+                   'paginated_favourite_articles': paginated_favourite_articles}, )
 
 
 def getReturnedTags(mostPopularTags, tags):
@@ -711,6 +735,8 @@ def get_target_article_url(id):
 @require_POST
 @login_required
 def favourite_article(request, article_id):
+
+    # determine article and user objects
     article = Article.objects.get(pk=article_id)
     user_updated = User.objects.get(pk=request.user.id)
 
@@ -744,10 +770,11 @@ def favourite_article(request, article_id):
     })
     print(w3c_json)
 
-    # remove user and article id info from favouriteListTable in database
+    # Remove user and article id info from favouriteListTable in database and delete the action
     if FavouriteListTable.objects.filter(article=article).exists() and FavouriteListTable.objects.filter(
             user=request.user.id).exists():
 
+        #find the related object in db
         favourite = FavouriteListTable.objects.filter(
             article=article, user=user_updated)
         favourite.delete()
@@ -757,6 +784,7 @@ def favourite_article(request, article_id):
 
     # save and link user and article id in database
     else:
+        # create a new FavouriteListTable object passing the related objects
         favourite = FavouriteListTable(article=article, user=user_updated)
         favourite.save()
 
