@@ -76,10 +76,9 @@ WSGI_APPLICATION = 'pubmed_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-# ATTENTION !!!
+# ATTENTION: LOCAL DATABASE CONFIGURATION
 # While running in local either comment out below section or
 # use 'Production Database Configuration' with Environment Variables.
-
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
@@ -91,7 +90,7 @@ WSGI_APPLICATION = 'pubmed_project.wsgi.application'
 #     }
 # }
 
-
+# ATTENTION: PRODUCTION DATABASE CONFIGURATION
 # Production Database Configuration with Environment Variables
 # If you use below configuration set local env variables using the values above.
 DATABASES = {

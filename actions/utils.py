@@ -4,8 +4,14 @@ from django.contrib.contenttypes.models import ContentType
 from .models import Action
 
 
-def create_action(user, verb, activity_json, target=None):
-    # check for any similar aciton made in the last minute
+
+def create_action(user, verb,  activity_json, target=None):
+    """
+    Helper function to create actions regardless of the application.
+    Any application in Django can use this method.
+    """
+
+    # check for any similar acioin made in the last minute
     now = timezone.now()
     last_minute = now - datetime.timedelta(seconds=60)
     similar_actions = Action.objects.filter(user_id=user.id,
@@ -31,6 +37,10 @@ def create_action(user, verb, activity_json, target=None):
 
 
 def delete_action(user, verb, target=None):
+    """
+    Helper function to delete actions regardless of the application.
+    Any application in Django can use this method.
+    """
     # no existing actions found
     target_ct = ContentType.objects.get_for_model(target)
     if 'article' in str(target_ct):
