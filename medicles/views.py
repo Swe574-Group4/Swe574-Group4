@@ -95,7 +95,7 @@ def advanced_search(request):
             articles = Article.objects.annotate(search=SearchVector(
                 'keyword_list', 'article_title', 'article_abstract'), ).filter(search=SearchQuery(term))
             Article_id = Annotation.objects.filter(
-                annotation_key__icontains=term).values('article_id')
+                annotation_value__icontains=term).values('article_id')
             list = []
             for i in Article_id:
                 id = i['article_id']
@@ -130,32 +130,30 @@ def advanced_search(request):
                     paginated_articles = paginate.get_page(page_number)
                     return render(request, 'medicles/advanced_searchresults.html',
                                   {'articles': articles, 'paginated_articles': paginated_articles,
-                                   'search_term': search_term, 'author': author, 'keywords': keyword,
+                                   'term': term, 'author': author, 'keywords': keyword,
                                    'end_date': end_date,
                                    'start_date': start_date, 'radio': radio, 'annotate': annotate})
-                if annotate and radio == "asc":
+                else:
                     articles = articles.order_by('pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
                     return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
-                                                                                    'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
+                                                                                    'term': term, 'author': author, 'keywords': keyword, 'end_date': end_date,
                                                                                     'start_date': start_date, 'radio': radio, 'annotate': annotate})
-                else:
-                    return render(request, 'medicles/advanced_searchresults.html')
             except:
                 if radio == "desc":
                     articles = noAnnotation.order_by('-pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
                     return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
-                                                                                    'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
+                                                                                    'term': term, 'author': author, 'keywords': keyword, 'end_date': end_date,
                                                                                     'start_date': start_date, 'radio': radio, 'paginate': paginate})
                 else:
                     articles = noAnnotation.order_by('pub_date')
                     paginate = Paginator(articles, 20)
                     paginated_articles = paginate.get_page(page_number)
                     return render(request, 'medicles/advanced_searchresults.html', {'articles': articles, 'paginated_articles': paginated_articles,
-                                                                                    'search_term': search_term, 'author': author, 'keywords': keyword, 'end_date': end_date,
+                                                                                    'term': term, 'author': author, 'keywords': keyword, 'end_date': end_date,
                                                                                     'start_date': start_date, 'radio': radio, 'paginate': paginate})
 
         else:
