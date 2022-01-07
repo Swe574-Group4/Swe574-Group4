@@ -1,7 +1,10 @@
 from datetime import datetime
+from django.contrib.auth.models import User
 from django.http import response
 from django.test import TestCase, Client
-from .models import Article, Tag
+
+from medicles.views import get_published_date, get_target_article_url, get_target_search_url, get_user_fullname, get_user_profile_url, search, user_search_activity
+from .models import Article, Search, Tag
 from medicles import services
 import datetime
 from django.urls import reverse
@@ -94,6 +97,52 @@ class ViewTests(TestCase):
         response = c.get('/admin')
         self.assertEqual(response.status_code, 301)
 
+    def test_published_date(self):
+        function_datetime = get_published_date()
+        self.assertEqual(function_datetime, datetime.datetime.now().isoformat())
+
+    def test_user_profile_url(self):
+        home_url = "http://medicles.com"
+        user_id = 1
+        user_profile_url = get_user_profile_url(home_url, user_id)
+        self.assertEqual(user_profile_url, "http://medicles.com/user/1")
+
+    def test_user_fullname(self):
+        user = User.objects.create(first_name="Ramazan",
+                                   last_name="Kilimci",
+                                   username="rkilimci",
+                                   password="thereisno!")
+        user_fullname = get_user_fullname(user)
+        self.assertEqual(user_fullname, "Ramazan Kilimci")
+
+    def test_target_search_url(self):
+        home_url = "http://medicles.com"
+        id = 1
+        search_url = get_target_search_url(home_url, id)
+        self.assertEqual(search_url, "http://medicles.com/search/1")
+
+    def test_target_search_name(self):
+        search_obj = Search.objects.create(term="reflux", user=1)
+        search_term = Search.objects.get(id=search_obj.id).term
+        self.assertEqual(search_term, "reflux")
+
+    def test_target_article_url(self):
+        home_url = "http://medicles.com"
+        id = 1
+        article_url = get_target_article_url(home_url, id)
+        self.assertEqual(article_url, "http://medicles.com/article/1")
+
+    def test_user_search_activity(self):
+        user = User.objects.create(first_name="Mine",
+                                   last_name="Öztürk",
+                                   username="mine",
+                                   password="thereisno!")
+        actor_user = User.objects.get(id=user.id)
+        search_obj = Search.objects.create(term="reflux disease", user=user.id)
+        print("Search Object:", search_obj.term)
+        print(search_obj)
+        user_search_activity_result = user_search_activity(actor_user, search_obj.term)
+        self.assertTrue(user_search_activity_result)
 
 class ServiceTests(TestCase):
 
