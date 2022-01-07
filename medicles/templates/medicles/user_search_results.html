@@ -235,7 +235,8 @@
     } else {
         //alert(event.target)
         // This helps to redirect href locations
-        window.location.href = event.target
+        //event.preventDefault()
+        window.location.href = event.target.attr('href')
     }
 
 });
