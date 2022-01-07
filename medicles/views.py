@@ -88,6 +88,7 @@ def index(request):
 
 
 @csrf_exempt
+@login_required
 def advanced_search(request):
     term = request.GET.get('term', None)
     search_term = str(term).split()
