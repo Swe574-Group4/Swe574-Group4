@@ -1,5 +1,5 @@
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
-from .models import Contact, Search
+from .models import Contact, Search, CustomUser
 import datetime
 import json
 from django.core.serializers.json import DjangoJSONEncoder
@@ -43,21 +43,24 @@ def index(request):
     """
     activities = []
     if not request.user.is_anonymous:
+        actor_user =  CustomUser.objects.filter(user=request.user.id).order_by('-last_login')[1]
         action_users = Action.objects.filter(target_id=request.user.id, verb=1)
         print("User Last Login:", request.user.last_login)
-        actor_user_last_login = request.user.last_login.replace(tzinfo=None)
+        actor_user_last_login = actor_user.last_login.replace(tzinfo=None)
+        print("Previous Login:", actor_user_last_login)
+        # actor_user_last_login = request.user.last_login.replace(tzinfo=None)
 
         for user in action_users:
             user_actions = Action.objects.filter(user_id=user.user_id)
             for action in user_actions:
                 # print(action.action_json)
-                # print(json.loads(action.action_json)['published'])
+                print("Published Date:", json.loads(action.action_json)['published'])
 
                 last_action = json.loads(action.action_json)
                 published_date = last_action['published']
-                activity_published_date = datetime.datetime.strptime(
-                    published_date[:-7], '%Y-%m-%dT%H:%M:%S')
-                if activity_published_date < actor_user_last_login:
+
+                activity_published_date = datetime.datetime.strptime(published_date[:-7], '%Y-%m-%dT%H:%M:%S')
+                if activity_published_date > actor_user_last_login:
                     action_type = last_action['type']
                     action_actor_name = last_action['actor']['name']
                     action_actor_url = last_action['actor']['url']
@@ -69,7 +72,13 @@ def index(request):
                                        action_object_name,
                                        action_object_url
                                        ])
-                    print("Date is ", True)
+                    print("Date is", True)
+        print(activities)
+        new_activities = []
+        for elem in activities:
+            if elem not in new_activities:
+                new_activities.append(elem)
+        activities = new_activities
     return render(request, 'medicles/index.html', {'activities': activities})
 
 
@@ -382,6 +391,8 @@ def add_annotation(request, article_id):
                     }
                     save_annotation_json(w3c_jsonld_annotation, article_id)
 
+                    annotate_article_activity(request, article_id)
+
                     print(w3c_jsonld_annotation)
                     # annotation = Annotation(annotation_key=user_def_annotation_key,
                     #                       annotation_value=annotation_input,
@@ -442,7 +453,7 @@ def signup(request):
 
 def profile(request, user_id):
     user = User.objects.get(pk=user_id)
-    followerCount = Action.objects.filter(user_id=user.id, verb=1).count()
+    followerCount = Action.objects.filter(target_id=user.id, verb=1).count()
     followingCount = Action.objects.filter(user_id=user.id, verb=1).count()
 
     tags = []
@@ -505,7 +516,6 @@ def getArticlesFromTagId(tags):
             articles[tag1] = articleList[0]
 
     return articles
-
 
 def user_search(request):
     return render(request, 'medicles/user_search.html')
@@ -672,7 +682,7 @@ def user_search_activity(user, search_term):
         now = timezone.now()
         last_minute = now - datetime.timedelta(seconds=60)
         target_search = Search.objects.filter(
-            user=user.id, term=search_term, created__gte=last_minute).last()
+            user=user.id, term=search_term, created__gte=last_minute).first()
 
         # Variables used for actor
         published_date = get_published_date()
@@ -706,7 +716,7 @@ def user_search_activity(user, search_term):
 
         # Create action for search term for a specific user
         create_action(user=user, verb=3, activity_json=w3c_json,
-                      target=target_search)
+                    target=target_search)
     return True
 
 # Gets target search url used in activity json
@@ -830,3 +840,49 @@ def ajax_load_annotation(request):
         results.append(obj.annotation_json)
 
     return JsonResponse(results, safe=False)
+
+def annotate_article_activity(request, article_id):
+    """
+    Creates Annotation activity in Actions app.
+    Actions app is separate than the medicles app.
+    It suits for the W3C Activity Streams standard.
+    """
+    if not request.user.is_anonymous:
+        article = Article.objects.get(pk=article_id)
+        user_updated = User.objects.get(pk=request.user.id)
+
+        # Variables used for actor
+        published_date = get_published_date()
+        actor_profile_url = get_user_profile_url(user_updated)
+        actor_fullname = get_user_fullname(user_updated)
+
+        # Variables used for target
+        target_object_url = get_target_article_url(article.article_id)
+        target_object_name = article.article_title
+
+        # Activity Streams 2.0 JSON-LD Implementation
+        w3c_json = json.dumps({
+            "@context": "https://www.w3.org/ns/activitystreams",
+            "summary": "{} annotated {}".format(actor_fullname, target_object_name),
+            "type": "Annotate",
+            "published": published_date,
+            "actor": {
+                "type": "Person",
+                "id": actor_profile_url,
+                "name": actor_fullname,
+                "url": actor_profile_url
+            },
+            "object": {
+                "id": target_object_url,
+                "type": "Article",
+                "url": target_object_url,
+                "name": target_object_name,
+            }
+        })
+        print(w3c_json)
+
+        create_action(user=user_updated, verb=6, activity_json=w3c_json, target=article)
+
+        return True
+
+    return False

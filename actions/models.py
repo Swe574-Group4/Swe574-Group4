@@ -14,7 +14,8 @@ class Action(models.Model):
                 ('2', 'Unfollow'),
                 ('3', 'Search'),
                 ('4', 'Favourite'),
-                ('5', 'Unfavourite'))
+                ('5', 'Unfavourite'),
+                ('6', 'Annotate'))
 
     user = models.ForeignKey('auth.User',
                              related_name='actions',
