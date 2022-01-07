@@ -45,10 +45,13 @@ def index(request):
     """
     activities = []
     if not request.user.is_anonymous:
-        actor_user =  CustomUser.objects.filter(user=request.user.id).order_by('-last_login')[1]
+        try:
+            actor_user =  CustomUser.objects.filter(user=request.user.id).order_by('-last_login')[1]
+            actor_user_last_login = actor_user.last_login.replace(tzinfo=None)
+        except:
+            actor_user_last_login = request.user.last_login.replace(tzinfo=None)
         action_users = Action.objects.filter(target_id=request.user.id, verb=1)
         print("User Last Login:", request.user.last_login)
-        actor_user_last_login = actor_user.last_login.replace(tzinfo=None)
         print("Previous Login:", actor_user_last_login)
         # actor_user_last_login = request.user.last_login.replace(tzinfo=None)
 
@@ -660,7 +663,7 @@ def get_published_date():
 
 # Gets user id as input and returns user profile
 def get_user_profile_url(home_url, user_id):
-    return home_url + "/user/" + str(user_id)
+    return home_url + "/profile/" + str(user_id)
 
 # Gets user object as input and returns User's Full Name
 def get_user_fullname(user):
