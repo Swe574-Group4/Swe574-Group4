@@ -87,7 +87,6 @@ def index(request):
     return render(request, 'medicles/index.html', {'activities': activities})
 
 
-@csrf_exempt
 @login_required
 def advanced_search(request):
     term = request.GET.get('term', None)
