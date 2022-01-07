@@ -113,6 +113,8 @@
 </head>
 <body>
 
+{% load action_tags %}
+
 <div class="topnav" id="myTopnav">
     <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
     <a href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-search"></i> Search</a>
@@ -154,12 +156,12 @@
 
     <label>
 
-        <button id="{{ user.id }}" data-id="{{ user.id }}"
-                data-action="{% if request.user in user.actions.all %}un{% endif %}follow" class="registerbtn">
-            {% if request.user not in user.actions.all %}
-                Follow
-            {% else %}
+        <button id="follow" data-id="{{ user.id }}"
+                data-action="{% if user.id|follow:request.user %}un{% endif %}follow" class="registerbtn">
+            {% if user.id|follow:request.user %}
                 Unfollow
+            {% else %}
+                Follow
             {% endif %}
         </button>
     </label>
@@ -246,34 +248,30 @@
 
 
 <script type="text/javascript">
-    $(this).click(function (e) {
-        var target = (event.target.id);
+    $("#follow").click(function (e) {
+        //var target = (event.target.id);
         //window.location.href = event.target
         //alert(target);
         //alert($(event.target).attr('class'))
-        if ($(e.target).is(":button")) {
+ 
             e.preventDefault();
             $.post('{% url "medicles:user_follow" %}',
                 {
-                    id: $('#' + target).data('id'),
-                    action: $('#' + target).data('action')
+                    id: $("#follow").data('id'),
+                    action: $("#follow").data('action')
                 },
                 function (data) {
                     if (data['status'] == 'ok') {
-                        var previous_action = $('#' + target).data('action');
+                        var previous_action = $("#follow").data('action');
 
                         // toggle data-action
-                        $('#' + target).data('action', previous_action == 'follow' ? 'unfollow' : 'follow');
+                        $("#follow").data('action', previous_action == 'follow' ? 'unfollow' : 'follow');
                         // toggle link text
-                        $('#' + target).text(previous_action == 'follow' ? 'Unfollow' : 'Follow');
+                        $("#follow").text(previous_action == 'follow' ? 'Unfollow' : 'Follow');
+                        location.reload();
                     }
                 });
-        } else {
-            //alert(event.target)
-            // This helps to redirect href locations
-            window.location.href = event.target
-        }
-
+                
     });
 
 </script>
