@@ -257,9 +257,13 @@
         </div>
 
         <!-- Annotation Individual Value-->
+        <button style=" background: none; float: right; border: none; padding-top: 10px" class="w3-text-teal"
+                onclick="dismissAnnotationValuesBox()">
+            <div style="text-align: center">Dismiss</div>
+        </button>
 
         <div class="row" style="height: 550px">
-            <h6 class="w3-text-teal" style="padding-top: 8px"><b> Annotation </b></h6>
+            <h6 class="w3-text-teal" style="padding-top: 25px"><b> Annotation </b></h6>
             <h6 id="annotation_input_value">Row </h6>
         </div>
 
@@ -277,9 +281,6 @@
                 Row </h6>
         </div>
 
-        <a href="javascript:void(0);" class="w3-text-teal" onclick="dismissAnnotationValuesBox()">
-            <div style="text-align: center;">Dismiss</div>
-        </a>
 
     </div>
 
@@ -679,6 +680,7 @@
 
     });
 </script>
+
 
 {% if alert_flag %}
     <script>alert("Tag exists. Please specify another tag name.")</script>
