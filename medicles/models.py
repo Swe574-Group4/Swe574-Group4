@@ -7,6 +7,7 @@ from django.db.models.deletion import CASCADE
 
 from django.db.models import JSONField
 from django.contrib.auth import get_user_model
+from django.contrib.auth.signals import user_logged_in
 
 # Create your models here.
 
@@ -97,3 +98,17 @@ class FavouriteListTable(models.Model):
                              blank=True,
                              null=True,
                              on_delete=CASCADE)
+
+class CustomUser(models.Model):
+    user = models.ForeignKey('auth.User',
+                             db_index=True,
+                             blank=True,
+                             null=True,
+                             on_delete=CASCADE)
+    last_login = models.DateTimeField( blank=True, null=True,)
+
+def save_last_login(sender, user, **kwargs):
+    user = User.objects.get(pk=user.id)
+    CustomUser(user=user, last_login=user.last_login).save()
+
+user_logged_in.connect(save_last_login, dispatch_uid="save_last_login")

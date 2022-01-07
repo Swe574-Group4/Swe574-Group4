@@ -162,12 +162,12 @@
     {{paginated_articles }}
     {% if paginated_articles.has_previous and annotate %}
     <a
-        href="?term={{search_term}}&annotation=on&author={{author}}&start_date={{start_date}}&end_date={{end_date}}&radio={{radio}}&keywords={{keyword}}&page={{paginated_articles.previous_page_number}}">Previous
+        href="?term={{term}}&annotation=on&author={{author}}&start_date={{start_date}}&end_date={{end_date}}&radio={{radio}}&keywords={{keyword}}&page={{paginated_articles.previous_page_number}}">Previous
         Page</a>
     {% endif %}
     {% if paginated_articles.has_previous and paginate%}
     <a
-        href="?term={{search_term}}&author={{author}}&start_date={{start_date}}&end_date={{end_date}}&radio={{radio}}&keywords={{keyword}}&page={{paginated_articles.previous_page_number}}">Previous
+        href="?term={{term}}&author={{author}}&start_date={{start_date}}&end_date={{end_date}}&radio={{radio}}&keywords={{keyword}}&page={{paginated_articles.previous_page_number}}">Previous
         Page</a>
     {% endif %}
 
@@ -175,12 +175,12 @@
 
     {% if paginated_articles.has_next and annotate %}
     <a
-        href="?term={{search_term}}&annotation=on&author={{author}}&start_date={{start_date}}&end_date={{end_date}}&radio={{radio}}&keywords={{keyword}}&page={{paginated_articles.next_page_number}}">Next
+        href="?term={{term}}&annotation=on&author={{author}}&start_date={{start_date}}&end_date={{end_date}}&radio={{radio}}&keywords={{keyword}}&page={{paginated_articles.next_page_number}}">Next
         Page</a>
     {% endif %}
     {% if paginated_articles.has_next and paginate%}
     <a
-        href="?term={{search_term}}&author={{author}}&start_date={{start_date}}&end_date={{end_date}}&radio={{radio}}&keywords={{keyword}}&page={{paginated_articles.next_page_number}}">Next
+        href="?term={{term}}&author={{author}}&start_date={{start_date}}&end_date={{end_date}}&radio={{radio}}&keywords={{keyword}}&page={{paginated_articles.next_page_number}}">Next
         Page</a>
     {% endif %}
     <div class="w3-container w3-margin-left">
