@@ -31,6 +31,8 @@ from django.utils import timezone
 from django.core import serializers
 from django.db.models import Q
 
+# Used in W3C_JSON variable in activity functions
+home_url = "http://localhost:8000"
 
 # Create your views here.
 
@@ -588,10 +590,6 @@ def ajax_required(f):
     return wrap
 
 
-# Used in W3C_JSON variable in activity functions
-home_url = "http://localhost:8000"
-
-
 @csrf_exempt
 @ajax_required
 @require_POST
@@ -609,10 +607,10 @@ def user_follow(request):
     user = User.objects.get(id=user_id)
 
     published_date = get_published_date()
-    actor_profile_url = get_user_profile_url(request.user.id)
+    actor_profile_url = get_user_profile_url(home_url, request.user.id)
     actor_fullname = get_user_fullname(request.user)
 
-    target_profile_url = get_user_profile_url(user.id)
+    target_profile_url = get_user_profile_url(home_url, user.id)
     target_fullname = get_user_fullname(user)
 
     if user_id and action:
@@ -656,19 +654,15 @@ def user_follow(request):
             return JsonResponse({'status': 'error'})
     return JsonResponse({'status': 'error'})
 
-
+# Generate published date in ISO format
 def get_published_date():
     return str(datetime.datetime.now().isoformat())
 
 # Gets user id as input and returns user profile
-
-
-def get_user_profile_url(user_id):
+def get_user_profile_url(home_url, user_id):
     return home_url + "/user/" + str(user_id)
 
 # Gets user object as input and returns User's Full Name
-
-
 def get_user_fullname(user):
     return str(user.first_name + " " + user.last_name)
 
@@ -686,11 +680,11 @@ def user_search_activity(user, search_term):
 
         # Variables used for actor
         published_date = get_published_date()
-        actor_profile_url = get_user_profile_url(user.id)
+        actor_profile_url = get_user_profile_url(home_url, user.id)
         actor_fullname = get_user_fullname(user)
 
         # Variables used for target
-        target_object_url = get_target_search_url(target_search.id)
+        target_object_url = get_target_search_url(home_url, target_search.id)
         target_object_name = get_target_search_name(target_search.id)
 
         # Activity Streams 2.0 JSON-LD Implementation
@@ -720,23 +714,17 @@ def user_search_activity(user, search_term):
     return True
 
 # Gets target search url used in activity json
-
-
-def get_target_search_url(id):
+def get_target_search_url(home_url, id):
     return home_url + "/search/" + str(id)
 
 # Gets target search name used in activity json
-
-
 def get_target_search_name(id):
     search_obj = Search.objects.filter(id=id)
     print('Search object: ', search_obj)
     return search_obj[0].term
 
 # Gets target article url used in activity json
-
-
-def get_target_article_url(id):
+def get_target_article_url(home_url, id):
     return home_url + "/article/" + str(id)
 
 
@@ -752,11 +740,11 @@ def favourite_article(request, article_id):
 
     # Variables used for actor
     published_date = get_published_date()
-    actor_profile_url = get_user_profile_url(user_updated)
+    actor_profile_url = get_user_profile_url(home_url, user_updated)
     actor_fullname = get_user_fullname(user_updated)
 
     # Variables used for target
-    target_object_url = get_target_article_url(article.article_id)
+    target_object_url = get_target_article_url(home_url, article.article_id)
     target_object_name = article.article_title
 
     # Activity Streams 2.0 JSON-LD Implementation
@@ -853,11 +841,11 @@ def annotate_article_activity(request, article_id):
 
         # Variables used for actor
         published_date = get_published_date()
-        actor_profile_url = get_user_profile_url(user_updated)
+        actor_profile_url = get_user_profile_url(home_url, user_updated)
         actor_fullname = get_user_fullname(user_updated)
 
         # Variables used for target
-        target_object_url = get_target_article_url(article.article_id)
+        target_object_url = get_target_article_url(home_url, article.article_id)
         target_object_name = article.article_title
 
         # Activity Streams 2.0 JSON-LD Implementation
