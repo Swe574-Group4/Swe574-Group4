@@ -233,11 +233,11 @@
                              class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }} </a></span>
                 {% endfor %}
             </p>
-{% if user.is_authenticated %}
-            <button type="button" style="background: none; border: none" class="collapsible icon w3-text-teal">
-                Click the items below in to see annotation details
-            </button>
-      {% endif %}
+            {% if user.is_authenticated %}
+                <button type="button" style="background: none; border: none" class="collapsible icon w3-text-teal">
+                    Click the items below in to see annotation details
+                </button>
+            {% endif %}
             <div class="content">
                 <ul id="annotation_list_view">
                 </ul>
@@ -278,8 +278,8 @@
         <div class="row" style="height: 50px; margin-top: 7px">
             <h6 class="w3-text-teal" style="display: inline-block;vertical-align: middle;"><b>
                 Created By:</b></h6>
-            <h6 id="annotation_creator_value" style="display: inline-block;vertical-align: middle;">
-                Row </h6>
+            <a id="annotation_creator_value" style="display: inline-block;vertical-align: middle;">
+                Row </a>
         </div>
 
 
@@ -488,8 +488,12 @@
 
         let item = annotationList[index]
         $('#annotation_input_value').text(item.body.value);
-        $('#annotation_date_value').text(item.created);
         $('#annotation_creator_value').text(item.creator.name);
+        document.getElementById("annotation_creator_value").href = "http://medicles.northeurope.azurecontainer.io:8000/profile/" + item.creator.id;
+        $('#annotation_date_value').text(item.created);
+
+        //<a href='http://localhost:8000/profile/1/'> item.creator.name</a>
+
 
         // show annotation highlight on article abstract
         const el = document.getElementById("articleAbstract")
