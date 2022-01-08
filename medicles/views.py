@@ -1,35 +1,31 @@
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
-from .models import Contact, Search, CustomUser
 import datetime
 import json
-from django.core.serializers.json import DjangoJSONEncoder
-import hashlib
-import psycopg2
+from collections import Counter
+
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramDistance
+from django.core.paginator import Paginator
 from django.db import IntegrityError
+from django.db.models import Q
+from django.http import HttpResponseBadRequest
+from django.http import HttpResponseRedirect
+from django.http import JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404, get_list_or_404
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+from actions.models import Action
+from actions.utils import create_action, delete_action
 from annotations.models import AnnotationModel
 from annotations.utils import save_annotation_json
 from medicles.forms import AnnotationForm
 from medicles.models import Article, Tag, Annotation, FavouriteListTable
 from medicles.services import Wikidata
 from .forms import SingupForm, TagForm
-from django.core import serializers
-from django.core.paginator import Paginator, EmptyPage
-from collections import Counter
-
-from actions.utils import create_action, delete_action
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from actions.models import Action
-from django.http import HttpResponseBadRequest
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from django.core import serializers
-from django.db.models import Q
+from .models import Contact, Search, CustomUser
 
 # Used in W3C_JSON variable in activity functions
 home_url = "http://localhost:8000"
@@ -538,7 +534,8 @@ def user_search_results(request):
         rank__gte=0.4).order_by('-rank')
     tags = Tag.objects.annotate(rank=SearchRank(search_vector_tag, search_term_updated_tag, cover_density=True)).filter(
         rank__gte=0.4).order_by('-rank')
-    taggedUsers = getUsersFromTagId(tags)
+    taggedUsers = getUsersFromTagId(tags, users)
+
     return render(request, 'medicles/user_search_results.html', {'users': users, 'taggedUsers': taggedUsers})
 
 # User Activity View
@@ -807,15 +804,24 @@ def favourite_article_List(request):
     return render(request, 'medicles/favourites.html', {'articles': articles})
 
 
-def getUsersFromTagId(tags) -> list:
+def getUsersFromTagId(tags, users) -> list:
     userList = []
     sql2 = 'select * from auth_user where id = (select user_id from medicles_tag_user where id = %s)'
     for tag1 in tags:
         userList2: [User] = list(User.objects.raw(sql2, [tag1.id]))
-        if userList2[0].id is not None:
+        if userList2[0].id is not None and not isUserExist(userList2[0], users):
             userList.append(userList2[0])
 
     return userList
+
+
+def isUserExist(tagUser, users) -> bool:
+    isExist: bool
+    for user in users:
+        if user.id == tagUser.id:
+            return True
+
+    return False
 
 
 def ajax_load_annotation(request):
