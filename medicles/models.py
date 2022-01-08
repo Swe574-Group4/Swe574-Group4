@@ -41,7 +41,7 @@ class Tag(models.Model):
     article = ManyToManyField(Article)
     user = ManyToManyField(User)
     tag_key = models.CharField(
-        unique=True, blank=True, null=True, max_length=100)
+        blank=True, null=True, max_length=100)
     tag_value = models.CharField(blank=True, null=True, max_length=100)
 
 
