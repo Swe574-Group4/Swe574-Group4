@@ -520,6 +520,7 @@ def getReturnedTags(mostPopularTags, tags):
         for tag in tags:
             if tag.tag_key == mostPopularTag[0]:
                 returnedTags.append(tag)
+                break
     return returnedTags
 
 # get article list from tags
@@ -837,18 +838,22 @@ def favourite_article_List(request):
 
 def getUsersFromTagId(tags, users) -> list:
     userList = []
-    sql2 = 'select * from auth_user where id = (select user_id from medicles_tag_user where id = %s)'
+    sql2 = 'select * from auth_user where id = (select user_id from medicles_tag_user where tag_id = %s)'
     for tag1 in tags:
         userList2: [User] = list(User.objects.raw(sql2, [tag1.id]))
-        if userList2[0].id is not None and not isUserExist(userList2[0], users):
+        if userList2 and userList2[0].id is not None and not isUserExist(userList2[0], users, userList):
             userList.append(userList2[0])
 
     return userList
 
 
-def isUserExist(tagUser, users) -> bool:
+def isUserExist(tagUser, users, userList) -> bool:
     isExist: bool
     for user in users:
+        if user.id == tagUser.id:
+            return True
+
+    for user in userList:
         if user.id == tagUser.id:
             return True
 
