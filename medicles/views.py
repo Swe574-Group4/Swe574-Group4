@@ -32,7 +32,7 @@ from django.core import serializers
 from django.db.models import Q
 
 # Used in W3C_JSON variable in activity functions
-home_url = "http://localhost:8000"
+home_url = "http://medicles.northeurope.azurecontainer.io:8000"
 
 # Create your views here.
 
