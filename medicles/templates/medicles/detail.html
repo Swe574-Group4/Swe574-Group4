@@ -302,14 +302,11 @@
                               name="user_def_tag_key" id="id_user_def_tag_key"
                               class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
                               style="width:80%; border-radius: 8px"></textarea>
-                    <br><br>
-
-                    <br><br>
+                    <br>
                     <label for="tag_key"><b></b></label>
                     <textarea type="text" placeholder="Search tag from Wikidata.." name="tag_key" id="id_tag_key"
                               class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
                               style="width:80%; border-radius: 8px"></textarea>
-                    <br><br>
                     <input type="submit" value="Add Tag" id="tagBT" class="w3-teal w3-button w3-round-xxlarge"
                            style="width:18%; float: right">
 
@@ -330,7 +327,7 @@
                 {% csrf_token %}
                 <div class="w3-margin-left w3-padding-24">
 
-                    <textarea type="text" placeholder="Text to be annotated"
+                    <textarea  maxlength="5000" type="text" placeholder="Text to be annotated"
                               readonly
                               name="user_def_annotation_key" id="textToBeAnnotated"
                               class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
@@ -341,8 +338,9 @@
                         Cancel Selection
                     </a>
 
-                    <br><br>
+                    <br>
                     <label for="annotation_key"><b></b></label>
+
                     <textarea
                             class=" w3-border-teal"
                             style="border-radius: 8px; width: 80%; padding: 7px"
@@ -351,10 +349,12 @@
                             name="annotation_key"
                             placeholder="Annotation" cols="40" rows="5"></textarea>
 
-                    <br><br>
-
                     <input type="submit" value="Add Annotation" id="annotationBT"
                            class="w3-teal w3-button w3-round-xxlarge" style="width:18%; float: right" disabled>
+
+
+                    <br><br>
+
 
                     <label for="annotation_indices"><b></b></label>
                     <input name="annotation_start_index" type="hidden" id="annotationStartIndex"
