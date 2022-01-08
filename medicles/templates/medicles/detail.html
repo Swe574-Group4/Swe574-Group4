@@ -208,8 +208,8 @@
 
             <div class="w3-container">
 
-                <h3 class="w3-text-teal"><a href="{% url 'medicles:detail' article.article_id %}"></a>{{
-                    article.article_title }}
+                <h3 class="w3-text-teal"><a
+                        href="{% url 'medicles:detail' article.article_id %}"></a>{{article.article_title }}
                 </h3>
                 <button style="float:right;" id="favourite" data-id="{{ article.article_id }}"
                     data-action="{% if alreadyFavourited == True %}Un{% endif %}favourite"
@@ -220,8 +220,8 @@
                     unfavourite
                     {% endif %}
                 </button>
-                <h6><a class="w3-text-gray"><strong>PMID</strong>: <span id="articleIDSpan">{{ article.article_id
-                            }}</span>
+                <h6><a class="w3-text-gray"><strong>PMID</strong>: <span id="articleIDSpan">{{article.article_id}}
+                        </span>
                         <strong>Publish
                             Date: </strong>: {{ article.pub_date }}</a></h6>
                 <h6><a class="w3-text-gray"><strong>Author List</strong>: {{ article.author_list }}</a></h6>
