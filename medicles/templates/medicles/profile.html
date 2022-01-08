@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -108,140 +109,147 @@
             clear: both;
             display: table;
         }
-
     </style>
 </head>
+
 <body>
 
-{% load action_tags %}
+    {% load action_tags %}
 
-<div class="topnav" id="myTopnav">
-    <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
-    <a href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-search"></i> Search</a>
-    {% if user.is_authenticated %}
+    <div class="topnav" id="myTopnav">
+        <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
+        <a href="{% url 'medicles:advanced_search' %}"><i class="fa fa-fw fa-search"></i> Search</a>
+        {% if user.is_authenticated %}
         <a href="{% url 'medicles:user_search' %}">User Search</a>
 
-      <a href="{% url 'medicles:logout' %}" style="float: right;">Log Out</a>
-    <a href="{% url 'medicles:profile' user.id%}" style="float: right;" >Hi {{ user.username }}!</a>
-      {% else %}
-      <a href="{% url 'medicles:login' %}" style="float: right;"><i class="fa fa-fw fa-user"></i> Login</a>
-      <a href="{% url 'medicles:signup' %}" style="float: right;"><i class="fa fa-fw fa-address-book"></i> Signup</a>
+        <a href="{% url 'medicles:logout' %}" style="float: right;">Log Out</a>
+        <a href="{% url 'medicles:profile' user.id%}" style="float: right;">Hi {{ user.username }}!</a>
+        {% else %}
+        <a href="{% url 'medicles:login' %}" style="float: right;"><i class="fa fa-fw fa-user"></i> Login</a>
+        <a href="{% url 'medicles:signup' %}" style="float: right;"><i class="fa fa-fw fa-address-book"></i> Signup</a>
 
-    {% endif %}
+        {% endif %}
 
-    <a href="javascript:void(0);" class="icon" onclick="myFunction()">
-        <i class="fa fa-bars"></i>
-    </a>
-</div>
-
-<div class="firstAndLastName">
-
-    <h1 class="AlertDiv"> {{ user.first_name }} {{ user.last_name }}</h1>
-    <h3 class="AlertDiv">Email: {{ user.email }}</h3>
-
-
-    <div class="float-container">
-
-        <div class="float-child">
-            <div class="green"><h3>{{ followerCount }} followers</h3></div>
-        </div>
-
-        <div class="float-child">
-            <div class="blue"><h3>{{ followingCount }} following</h3></div>
-        </div>
-
-
+        <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+            <i class="fa fa-bars"></i>
+        </a>
     </div>
 
+    <div class="firstAndLastName">
 
-    <label>
+        <h1 class="AlertDiv"> {{ user.first_name }} {{ user.last_name }}</h1>
+        <h3 class="AlertDiv">Email: {{ user.email }}</h3>
 
-        <button id="follow" data-id="{{ user.id }}"
+
+        <div class="float-container">
+
+            <div class="float-child">
+                <div class="green">
+                    <h3>{{ followerCount }} followers</h3>
+                </div>
+            </div>
+
+            <div class="float-child">
+                <div class="blue">
+                    <h3>{{ followingCount }} following</h3>
+                </div>
+            </div>
+
+
+        </div>
+
+
+        <label>
+
+            <button id="follow" data-id="{{ user.id }}"
                 data-action="{% if user.id|follow:request.user %}un{% endif %}follow" class="registerbtn">
-            {% if user.id|follow:request.user %}
+                {% if user.id|follow:request.user %}
                 Unfollow
-            {% else %}
+                {% else %}
                 Follow
-            {% endif %}
-        </button>
-    </label>
+                {% endif %}
+            </button>
+        </label>
 
 
-</div>
-<div class="recentTagsDiv" >
-    <div>
-        <H1 class="titleOfTab">Recent Tags</H1>
     </div>
+    <div class="recentTagsDiv">
+        <div>
+            <H1 class="titleOfTab">Recent Tags</H1>
+        </div>
 
-{% if returnedTagArticles.items %}
-    {% for tag, article in returnedTagArticles.items %}
+        {% if returnedTagArticles.items %}
+        {% for tag, article in returnedTagArticles.items %}
         <div class="recentTags">
-         <h3>Tag:  <a href="{{ tag.tag_value }}"
-                                  class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag.tag_key }} </a></h3>
-           <h3>Article: <a class="w3-text-teal"
-                    href="{% url 'medicles:detail' article.article_id %}">{{ article.article_title|slice:"50" }}</a> </h3>
+            <h3>Tag: <a href="{{ tag.tag_value }}" class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{
+                    tag.tag_key }} </a></h3>
+            <h3>Article: <a class="w3-text-teal" href="{% url 'medicles:detail' article.article_id %}">{{
+                    article.article_title|slice:"50" }}</a> </h3>
 
             <hr>
         </div>
-    {% endfor %}
-{% else %}
-    <h3 class="titleOfTab">No article tagged yet.</h3>
-{% endif %}
+        {% endfor %}
+        {% else %}
+        <h3 class="titleOfTab">No article tagged yet.</h3>
+        {% endif %}
 
 
-</div>
-<div class="recentTagsDiv">
-    <div>
-        <H1 class="titleOfTab">Top used tags</H1>
     </div>
-    {% if mostPopularTags %}
-   {% for mostPopularTag in mostPopularTags %}
+    <div class="recentTagsDiv">
+        <div>
+            <H1 class="titleOfTab">Top used tags</H1>
+        </div>
+        {% if mostPopularTags %}
+        {% for mostPopularTag in mostPopularTags %}
         <div class="titleOfTab">
             <span><a href="{{ mostPopularTag.tag_value }}"
-                     class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ mostPopularTag.tag_key }} </a></span>
+                    class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ mostPopularTag.tag_key }}
+                </a></span>
 
             <hr>
         </div>
-    {% endfor %}
-{% else %}
-     <h3 class="titleOfTab">No article tagged yet.</h3>
-{% endif %}
+        {% endfor %}
+        {% else %}
+        <h3 class="titleOfTab">No article tagged yet.</h3>
+        {% endif %}
 
 
-</div>
+    </div>
 
-<div class="w3-container w3-margin-right w3-margin-left">
-    <h2 class="w3-container"> {{ user.username }}'s Favourited Articles</h2>
-    <h4 class="w3-container w3-text-blue-grey"><strong> Total of {{ paginated_favourite_articles.count }} articles favorited </strong></h4>
+    <div class="w3-container w3-margin-right w3-margin-left">
+        <h2 class="w3-container"> {{ user.username }}'s Favourited Articles</h2>
+        <h4 class="w3-container w3-text-blue-grey"><strong> Total of {{ paginated_favourite_articles.count }} articles
+                favorited </strong></h4>
 
-    {% for fav_article in paginated_favourite_articles %}
+        {% for fav_article in paginated_favourite_articles %}
         <div class="w3-container w3-margin-right w3-margin-left">
 
-            <h3 class="w3-text-teal"><a
-                    href="{% url 'medicles:detail' fav_article.article_id %}">{{ fav_article.article_title }}</h3>
-            <h6><a class="w3-text-gray"><strong>PMID</strong>: {{ fav_article.article_id }} <strong>Publish Date: </strong>:
-                {{ fav_article.pub_date }}</a></h6>
+            <h3 class="w3-text-teal"><a href="{% url 'medicles:detail' fav_article.article_id %}">{{
+                    fav_article.article_title }}</h3>
+            <h6><a class="w3-text-gray"><strong>PMID</strong>: {{ fav_article.article_id }} <strong>Publish Date:
+                    </strong>:
+                    {{ fav_article.pub_date }}</a></h6>
             <h6><a class="w3-text-gray"><strong>Author List</strong>: {{ fav_article.author_list }}</a></h6>
             <p>{{ fav_article.article_abstract }}</p>
             <hr>
         </div>
-    {% endfor %}
+        {% endfor %}
 
-</div>
+    </div>
 
-{% if paginated_favourite_articles.has_previous %}
-<a href="?&page={{paginated_favourite_articles.previous_page_number}}">Previous Page</a>
-{% endif %}
+    {% if paginated_favourite_articles.has_previous %}
+    <a href="?&page={{paginated_favourite_articles.previous_page_number}}">Previous Page</a>
+    {% endif %}
 
-{{paginated_favourite_articles }}
+    {{paginated_favourite_articles }}
 
-{% if paginated_favourite_articles.has_next %}
-<a href="?&page={{paginated_favourite_articles.next_page_number}}">Next Page</a>
-{% endif %}
+    {% if paginated_favourite_articles.has_next %}
+    <a href="?&page={{paginated_favourite_articles.next_page_number}}">Next Page</a>
+    {% endif %}
 
 
-<hr>
-<hr>
+    <hr>
+    <hr>
 
 
 </body>
@@ -253,25 +261,25 @@
         //window.location.href = event.target
         //alert(target);
         //alert($(event.target).attr('class'))
- 
-            e.preventDefault();
-            $.post('{% url "medicles:user_follow" %}',
-                {
-                    id: $("#follow").data('id'),
-                    action: $("#follow").data('action')
-                },
-                function (data) {
-                    if (data['status'] == 'ok') {
-                        var previous_action = $("#follow").data('action');
 
-                        // toggle data-action
-                        $("#follow").data('action', previous_action == 'follow' ? 'unfollow' : 'follow');
-                        // toggle link text
-                        $("#follow").text(previous_action == 'follow' ? 'Unfollow' : 'Follow');
-                        location.reload();
-                    }
-                });
-                
+        e.preventDefault();
+        $.post('{% url "medicles:user_follow" %}',
+            {
+                id: $("#follow").data('id'),
+                action: $("#follow").data('action')
+            },
+            function (data) {
+                if (data['status'] == 'ok') {
+                    var previous_action = $("#follow").data('action');
+
+                    // toggle data-action
+                    $("#follow").data('action', previous_action == 'follow' ? 'unfollow' : 'follow');
+                    // toggle link text
+                    $("#follow").text(previous_action == 'follow' ? 'Unfollow' : 'Follow');
+                    location.reload();
+                }
+            });
+
     });
 
 </script>

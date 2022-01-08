@@ -69,6 +69,7 @@ class ViewTests(TestCase):
         invaliddata = {'term': 'reflux', 'author': '', 'start_date': '2022-12-31',
                        'end_date': '2022-01-01', 'radio': '', 'keywords': ''}
         response = c.get(url, data)
+        print("here", response.context)
         invalidresponse = c.get(url, invaliddata)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
@@ -99,7 +100,8 @@ class ViewTests(TestCase):
 
     def test_published_date(self):
         function_datetime = get_published_date()
-        self.assertEqual(function_datetime, datetime.datetime.now().isoformat())
+        self.assertEqual(function_datetime,
+                         datetime.datetime.now().isoformat())
 
     def test_user_profile_url(self):
         home_url = "http://medicles.com"
@@ -141,8 +143,10 @@ class ViewTests(TestCase):
         search_obj = Search.objects.create(term="reflux disease", user=user.id)
         print("Search Object:", search_obj.term)
         print(search_obj)
-        user_search_activity_result = user_search_activity(actor_user, search_obj.term)
+        user_search_activity_result = user_search_activity(
+            actor_user, search_obj.term)
         self.assertTrue(user_search_activity_result)
+
 
 class ServiceTests(TestCase):
 

@@ -5,13 +5,12 @@
 
 <form class="example2" action="{% url 'medicles:advanced_search' %}"
     style="text-align:left;margin: 10px;max-width:500px;" method="get">
-    <label for="term" id="text">Search: </label> &nbsp; &nbsp;
+    <label for="term" id="text">Title: </label> &nbsp; &nbsp;&nbsp; &nbsp;
     <input type="text" placeholder="Search.." name="term" class="w3-white w3-button w3-round-xlarge" required>
     <br>
     <input type="checkbox" id="annotation" name="annotation">
     <label for="annotation">Search in Annotations</label>
-    <!-- <input type="radio" id="annotationoff" name="noannotation" checked>
-    <label for="annotation">No Annotation</label> -->
+
 
     <br><br>
     <label for="term">Author: </label> &nbsp; &nbsp;
