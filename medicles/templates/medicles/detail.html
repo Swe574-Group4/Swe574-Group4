@@ -233,10 +233,11 @@
                              class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }} </a></span>
                 {% endfor %}
             </p>
-
+{% if user.is_authenticated %}
             <button type="button" style="background: none; border: none" class="collapsible icon w3-text-teal">
                 Click the items below in to see annotation details
             </button>
+      {% endif %}
             <div class="content">
                 <ul id="annotation_list_view">
                 </ul>
