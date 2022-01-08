@@ -88,7 +88,6 @@ def index(request):
     return render(request, 'medicles/index.html', {'activities': activities})
 
 
-@login_required
 def advanced_search(request):
     """
     This functions first gets the information filled in fields.
