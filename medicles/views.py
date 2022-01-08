@@ -507,7 +507,7 @@ def profile(request, user_id):
         article_id__in=article_id_list)
 
     # paginate result object in bundles of 5
-    paginate = Paginator(users_favourite_articles, 5)
+    paginate = Paginator(users_favourite_articles, 10)
     # set default page as 1 and get the desired page number from request
     page_number = request.GET.get('page', 1)
     # select objects realted to the specified page number
