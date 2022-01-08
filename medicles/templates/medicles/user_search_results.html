@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -108,138 +108,143 @@
             clear: both;
             display: table;
         }
-
     </style>
 </head>
+
 <body>
 
-{% load action_tags %}
+    {% load action_tags %}
 
-<div class="topnav" id="myTopnav">
-    <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
-    <a href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-search"></i> Search</a>
-    {% if user.is_authenticated %}
-          <a href="{% url 'medicles:user_search' %}">User Search</a>
+    <div class="topnav" id="myTopnav">
+        <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
+        <a href="{% url 'medicles:advanced_search' %}"><i class="fa fa-fw fa-search"></i> Search</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'medicles:user_search' %}">User Search</a>
 
-      <a href="{% url 'medicles:logout' %}" style="float: right;">Log Out</a>
-    <a href="{% url 'medicles:profile' user.id%}" style="float: right;" >Hi {{ user.username }}!</a>
-      {% else %}
-      <a href="{% url 'medicles:login' %}" style="float: right;"><i class="fa fa-fw fa-user"></i> Login</a>
-      <a href="{% url 'medicles:signup' %}" style="float: right;"><i class="fa fa-fw fa-address-book"></i> Signup</a>
+        <a href="{% url 'medicles:logout' %}" style="float: right;">Log Out</a>
+        <a href="{% url 'medicles:profile' user.id%}" style="float: right;">Hi {{ user.username }}!</a>
+        {% else %}
+        <a href="{% url 'medicles:login' %}" style="float: right;"><i class="fa fa-fw fa-user"></i> Login</a>
+        <a href="{% url 'medicles:signup' %}" style="float: right;"><i class="fa fa-fw fa-address-book"></i> Signup</a>
 
-    {% endif %}
+        {% endif %}
 
-    <a href="javascript:void(0);" class="icon" onclick="myFunction()">
-        <i class="fa fa-bars"></i>
-    </a>
-</div>
+        <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+            <i class="fa fa-bars"></i>
+        </a>
+    </div>
 
-<div class="w3-container w3-margin-right w3-margin-left">
+    <div class="w3-container w3-margin-right w3-margin-left">
 
-    <h2 class="w3-container center">User Search Results</h2>
-    {% if users.count != 0 %}
+        <h2 class="w3-container center">User Search Results</h2>
+        {% if users.count != 0 %}
         <h4 class="w3-container w3-text-blue-grey center"><strong>{{ users.count }} users found by name</strong></h4>
-    {% endif %}
+        {% endif %}
 
-    {% if taggedUsers|length != 0 %}
+        {% if taggedUsers|length != 0 %}
         <h4 class="w3-container w3-text-blue-grey center"><strong>{{ taggedUsers|length }} users found by tag</strong>
         </h4>
-    {% endif %}
+        {% endif %}
 
-<h1><br/></h1>
-<div class="userSearchResults">
-    {% for user in users %}
+        <h1><br /></h1>
+        <div class="userSearchResults">
+            {% for user in users %}
 
-        <div class="w3-container w3-margin-right w3-margin-left userResult">
-
-
-            <h3 style="display:inline" class="w3-text-teal " id="userName"><a href="{% url 'medicles:profile' user.id%}">{{ user.first_name }} {{ user.last_name }}</a></h3>
-
-            <button style="float:right;" id="{{ user.id }}" data-id="{{ user.id }}" data-action="{% if user.id|follow:request.user  %}un{% endif %}follow" class="w3-button w3-round-xlarge w3-teal w3-padding-medium">
-                {% if user.id|follow:request.user %}
-                    Unfollow
-                {% else %}
-                    Follow
-                {% endif %}
-            </button>
-           <br>
-           <p class="w3-margin-left">
-            <strong>Tags:</strong>
-                {% for tag_obj in user.tag_set.all %}
-                    <span><a href="{{ tag_obj.tag_value }}"
-                             class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }} </a></span>
-                {% endfor %}
-            </p>
-        </div>
-        <hr>
-        {% endfor %}
-
-
-    {% for user in taggedUsers %}
-        {% if user.id %}
             <div class="w3-container w3-margin-right w3-margin-left userResult">
 
 
                 <h3 style="display:inline" class="w3-text-teal " id="userName"><a
-                        href="../profile/{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</a></h3>
+                        href="{% url 'medicles:profile' user.id%}">{{ user.first_name }} {{ user.last_name }}</a></h3>
 
-                <button style="float:right;" id="{{ user.id }}" data-id="{{ user.id }}" data-action="{% if request.user in user.actions.all %}un{% endif %}follow" class="w3-button w3-round-xlarge w3-teal w3-padding-medium">
-                {% if request.user not in user.actions.all %}
-                    Follow
-                {% else %}
+                <button style="float:right;" id="{{ user.id }}" data-id="{{ user.id }}"
+                    data-action="{% if user.id|follow:request.user  %}un{% endif %}follow"
+                    class="w3-button w3-round-xlarge w3-teal w3-padding-medium">
+                    {% if user.id|follow:request.user %}
                     Unfollow
-                {% endif %}
-            </button>
+                    {% else %}
+                    Follow
+                    {% endif %}
+                </button>
                 <br>
                 <p class="w3-margin-left">
                     <strong>Tags:</strong>
                     {% for tag_obj in user.tag_set.all %}
                     <span><a href="{{ tag_obj.tag_value }}"
-                             class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }} </a></span>
-                {% endfor %}
+                            class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }}
+                        </a></span>
+                    {% endfor %}
+                </p>
+            </div>
+            <hr>
+            {% endfor %}
+
+
+            {% for user in taggedUsers %}
+            {% if user.id %}
+            <div class="w3-container w3-margin-right w3-margin-left userResult">
+
+
+                <h3 style="display:inline" class="w3-text-teal " id="userName"><a href="../profile/{{ user.id }}">{{
+                        user.first_name }} {{ user.last_name }}</a></h3>
+
+                <button style="float:right;" id="{{ user.id }}" data-id="{{ user.id }}"
+                    data-action="{% if request.user in user.actions.all %}un{% endif %}follow"
+                    class="w3-button w3-round-xlarge w3-teal w3-padding-medium">
+                    {% if request.user not in user.actions.all %}
+                    Follow
+                    {% else %}
+                    Unfollow
+                    {% endif %}
+                </button>
+                <br>
+                <p class="w3-margin-left">
+                    <strong>Tags:</strong>
+                    {% for tag_obj in user.tag_set.all %}
+                    <span><a href="{{ tag_obj.tag_value }}"
+                            class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }}
+                        </a></span>
+                    {% endfor %}
 
                 </p>
             </div>
             <hr>
-        {% endif %}
-    {% endfor %}
-</div>
+            {% endif %}
+            {% endfor %}
+        </div>
     </div>
 
 
 
-<script type="text/javascript">
-    $(this).click(function(e){
-        var target = (event.target.id);
-        //window.location.href = event.target
-        //alert(target);
-        //alert($(event.target).attr('class'))
-        if ( $(e.target).is(":button") ) {
-        e.preventDefault();
-        $.post('{% url "medicles:user_follow" %}',
-            {
-                id: $('#'+target).data('id'),
-                action: $('#'+target).data('action')
-            },
-            function(data){
-                if (data['status'] == 'ok')
-                {
-                    var previous_action = $('#'+target).data('action');
+    <script type="text/javascript">
+        $(this).click(function (e) {
+            var target = (event.target.id);
+            //window.location.href = event.target
+            //alert(target);
+            //alert($(event.target).attr('class'))
+            if ($(e.target).is(":button")) {
+                e.preventDefault();
+                $.post('{% url "medicles:user_follow" %}',
+                    {
+                        id: $('#' + target).data('id'),
+                        action: $('#' + target).data('action')
+                    },
+                    function (data) {
+                        if (data['status'] == 'ok') {
+                            var previous_action = $('#' + target).data('action');
 
-                    // toggle data-action
-                    $('#'+target).data('action', previous_action == 'follow' ? 'unfollow' : 'follow');
-                    // toggle link text
-                    $('#'+target).text(previous_action == 'follow' ? 'Unfollow' : 'Follow');
+                            // toggle data-action
+                            $('#' + target).data('action', previous_action == 'follow' ? 'unfollow' : 'follow');
+                            // toggle link text
+                            $('#' + target).text(previous_action == 'follow' ? 'Unfollow' : 'Follow');
+                        }
+                    });
+            } else {
+                //alert(event.target)
+                // This helps to redirect href locations
+                //event.preventDefault()
+                window.location.href = event.target.attr('href')
             }
+
         });
-    } else {
-        //alert(event.target)
-        // This helps to redirect href locations
-        //event.preventDefault()
-        window.location.href = event.target.attr('href')
-    }
 
-});
-
-</script>
-
+    </script>

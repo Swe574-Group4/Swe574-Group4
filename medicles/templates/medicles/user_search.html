@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -104,47 +105,47 @@
             clear: both;
             display: table;
         }
-
     </style>
 </head>
+
 <body>
 
-<div class="topnav" id="myTopnav">
-  <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
-  <a href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-search"></i> Search</a>
-  {% if user.is_authenticated %}
-      <a href="{% url 'medicles:user_search' %}">User Search</a>
+    <div class="topnav" id="myTopnav">
+        <a class="active" href="{% url 'medicles:index' %}"><i class="fa fa-fw fa-home"></i> Home</a>
+        <a href="{% url 'medicles:advanced_search' %}"><i class="fa fa-fw fa-search"></i> Search</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'medicles:user_search' %}">User Search</a>
 
-      <a href="{% url 'medicles:logout' %}" style="float: right;">Log Out</a>
-    <a href="{% url 'medicles:profile' user.id%}" style="float: right;" >Hi {{ user.username }}!</a>
-      {% else %}
-      <a href="{% url 'medicles:login' %}" style="float: right;"><i class="fa fa-fw fa-user"></i> Login</a>
-      <a href="{% url 'medicles:signup' %}" style="float: right;"><i class="fa fa-fw fa-address-book"></i> Signup</a>
+        <a href="{% url 'medicles:logout' %}" style="float: right;">Log Out</a>
+        <a href="{% url 'medicles:profile' user.id%}" style="float: right;">Hi {{ user.username }}!</a>
+        {% else %}
+        <a href="{% url 'medicles:login' %}" style="float: right;"><i class="fa fa-fw fa-user"></i> Login</a>
+        <a href="{% url 'medicles:signup' %}" style="float: right;"><i class="fa fa-fw fa-address-book"></i> Signup</a>
 
-  {% endif %}
+        {% endif %}
 
-  <a href="javascript:void(0);" class="icon" onclick="myFunction()">
-    <i class="fa fa-bars"></i>
-  </a>
-</div>
- <h1><br></h1>
-<h2 style="text-align: center">User Search</h2>
-
-<div style="padding-left:16px">
+        <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+            <i class="fa fa-bars"></i>
+        </a>
+    </div>
     <h1><br></h1>
-</div>
-<div class="container" id="userList">
-    <form class="userSearch" action="{% url 'medicles:user_search_results' %}" method="get">
-        <label for="name">Name</label>
-        <input type="text" id="name" name="name" placeholder="Name of the user..">
+    <h2 style="text-align: center">User Search</h2>
+
+    <div style="padding-left:16px">
+        <h1><br></h1>
+    </div>
+    <div class="container" id="userList">
+        <form class="userSearch" action="{% url 'medicles:user_search_results' %}" method="get">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" placeholder="Name of the user..">
 
 
-        <label for="tags">Tags</label>
-        <input type="text" id="tags" name="tags" placeholder="Tags..">
+            <label for="tags">Tags</label>
+            <input type="text" id="tags" name="tags" placeholder="Tags..">
 
-        <input type="submit" value="Submit">
-    </form>
-</div>
+            <input type="submit" value="Submit">
+        </form>
+    </div>
 
 </body>
 

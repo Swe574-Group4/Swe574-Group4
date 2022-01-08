@@ -36,6 +36,7 @@ home_url = "http://localhost:8000"
 
 # Create your views here.
 
+
 def index(request):
     """
     This function returns the home page of the application.
@@ -46,10 +47,12 @@ def index(request):
     activities = []
     if not request.user.is_anonymous:
         try:
-            actor_user =  CustomUser.objects.filter(user=request.user.id).order_by('-last_login')[1]
+            actor_user = CustomUser.objects.filter(
+                user=request.user.id).order_by('-last_login')[1]
             actor_user_last_login = actor_user.last_login.replace(tzinfo=None)
         except:
-            actor_user_last_login = request.user.last_login.replace(tzinfo=None)
+            actor_user_last_login = request.user.last_login.replace(
+                tzinfo=None)
         action_users = Action.objects.filter(target_id=request.user.id, verb=1)
         print("User Last Login:", request.user.last_login)
         print("Previous Login:", actor_user_last_login)
@@ -59,12 +62,14 @@ def index(request):
             user_actions = Action.objects.filter(user_id=user.user_id)
             for action in user_actions:
                 # print(action.action_json)
-                print("Published Date:", json.loads(action.action_json)['published'])
+                print("Published Date:", json.loads(
+                    action.action_json)['published'])
 
                 last_action = json.loads(action.action_json)
                 published_date = last_action['published']
 
-                activity_published_date = datetime.datetime.strptime(published_date[:-7], '%Y-%m-%dT%H:%M:%S')
+                activity_published_date = datetime.datetime.strptime(
+                    published_date[:-7], '%Y-%m-%dT%H:%M:%S')
                 if activity_published_date > actor_user_last_login:
                     action_type = last_action['type']
                     action_actor_name = last_action['actor']['name']
@@ -89,6 +94,13 @@ def index(request):
 
 @login_required
 def advanced_search(request):
+    """
+    This functions first gets the information filled in fields.
+    It filters if author or date or keyword exists, otherwise it recommends user to fill another date range. 
+    After estimating the rank, it first gets annotation matching ids. After that it filters criterias with 
+    annotation matching query with union operator.
+    Pagination is used here with 20 article limitation.
+    """
     term = request.GET.get('term', None)
     search_term = str(term).split()
     author = request.GET.get('author', None)
@@ -491,7 +503,8 @@ def profile(request, user_id):
     article_id_list = []
     for object in users_favourite_list:
         article_id_list.append(object.article_id)
-    users_favourite_articles = Article.objects.filter(article_id__in=article_id_list)
+    users_favourite_articles = Article.objects.filter(
+        article_id__in=article_id_list)
 
     # paginate result object in bundles of 5
     paginate = Paginator(users_favourite_articles, 5)
@@ -524,6 +537,7 @@ def getArticlesFromTagId(tags):
             articles[tag1] = articleList[0]
 
     return articles
+
 
 def user_search(request):
     return render(request, 'medicles/user_search.html')
@@ -661,14 +675,20 @@ def user_follow(request):
     return JsonResponse({'status': 'error'})
 
 # Generate published date in ISO format
+
+
 def get_published_date():
     return str(datetime.datetime.now().isoformat())
 
 # Gets user id as input and returns user profile
+
+
 def get_user_profile_url(home_url, user_id):
     return home_url + "/profile/" + str(user_id)
 
 # Gets user object as input and returns User's Full Name
+
+
 def get_user_fullname(user):
     return str(user.first_name + " " + user.last_name)
 
@@ -716,20 +736,26 @@ def user_search_activity(user, search_term):
 
         # Create action for search term for a specific user
         create_action(user=user, verb=3, activity_json=w3c_json,
-                    target=target_search)
+                      target=target_search)
     return True
 
 # Gets target search url used in activity json
+
+
 def get_target_search_url(home_url, id):
     return home_url + "/search/" + str(id)
 
 # Gets target search name used in activity json
+
+
 def get_target_search_name(id):
     search_obj = Search.objects.filter(id=id)
     print('Search object: ', search_obj)
     return search_obj[0].term
 
 # Gets target article url used in activity json
+
+
 def get_target_article_url(home_url, id):
     return home_url + "/article/" + str(id)
 
@@ -778,7 +804,7 @@ def favourite_article(request, article_id):
     if FavouriteListTable.objects.filter(article=article).exists() and FavouriteListTable.objects.filter(
             user=request.user.id).exists():
 
-        #find the related object in db
+        # find the related object in db
         favourite = FavouriteListTable.objects.filter(
             article=article, user=user_updated)
         favourite.delete()
@@ -840,6 +866,7 @@ def ajax_load_annotation(request):
 
     return JsonResponse(results, safe=False)
 
+
 def annotate_article_activity(request, article_id):
     """
     Creates Annotation activity in Actions app.
@@ -856,7 +883,8 @@ def annotate_article_activity(request, article_id):
         actor_fullname = get_user_fullname(user_updated)
 
         # Variables used for target
-        target_object_url = get_target_article_url(home_url, article.article_id)
+        target_object_url = get_target_article_url(
+            home_url, article.article_id)
         target_object_name = article.article_title
 
         # Activity Streams 2.0 JSON-LD Implementation
@@ -880,7 +908,8 @@ def annotate_article_activity(request, article_id):
         })
         print(w3c_json)
 
-        create_action(user=user_updated, verb=6, activity_json=w3c_json, target=article)
+        create_action(user=user_updated, verb=6,
+                      activity_json=w3c_json, target=article)
 
         return True
 
