@@ -69,7 +69,6 @@ class ViewTests(TestCase):
         invaliddata = {'term': 'reflux', 'author': '', 'start_date': '2022-12-31',
                        'end_date': '2022-01-01', 'radio': '', 'keywords': ''}
         response = c.get(url, data)
-        print("here", response.context)
         invalidresponse = c.get(url, invaliddata)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
