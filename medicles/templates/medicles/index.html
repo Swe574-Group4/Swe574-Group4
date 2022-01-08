@@ -97,7 +97,7 @@
                     annotated
                   {% endif %}
 
-                  {% if  activity.0 == 'Search' or activity.0 == 'Tag' or activity.0 == 'Annotate'%}
+                  {% if  activity.0 == 'Search' or activity.0 == 'Tag' %}
                     <a href="#"> <mark>{{ activity.3 }}</mark> </a>
                   {% else %}
                     <a href={{ activity.4 }}> <mark>{{ activity.3 }}</mark> </a>

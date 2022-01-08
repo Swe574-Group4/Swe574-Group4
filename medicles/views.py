@@ -28,7 +28,7 @@ from .forms import SingupForm, TagForm
 from .models import Contact, Search, CustomUser
 
 # Used in W3C_JSON variable in activity functions
-home_url = "http://medicles.northeurope.azurecontainer.io:8000"
+home_url = "http://40.68.79.96:8000"
 
 # Create your views here.
 
@@ -49,13 +49,13 @@ def index(request):
         except:
             actor_user_last_login = request.user.last_login.replace(
                 tzinfo=None)
-        action_users = Action.objects.filter(target_id=request.user.id, verb=1)
+        action_users = Action.objects.filter(user=request.user, verb=1)
         print("User Last Login:", request.user.last_login)
         print("Previous Login:", actor_user_last_login)
         # actor_user_last_login = request.user.last_login.replace(tzinfo=None)
 
         for user in action_users:
-            user_actions = Action.objects.filter(user_id=user.user_id)
+            user_actions = Action.objects.filter(user_id=user.target_id)
             for action in user_actions:
                 # print(action.action_json)
                 print("Published Date:", json.loads(
@@ -883,12 +883,13 @@ def annotate_article_activity(request, article_id):
 
         # Variables used for actor
         published_date = get_published_date()
-        actor_profile_url = get_user_profile_url(home_url, user_updated)
+        actor_profile_url = get_user_profile_url(home_url, user_updated.id)
         actor_fullname = get_user_fullname(user_updated)
 
         # Variables used for target
         target_object_url = get_target_article_url(
             home_url, article.article_id)
+        print("Target object url: ", target_object_url)
         target_object_name = article.article_title
 
         # Activity Streams 2.0 JSON-LD Implementation
