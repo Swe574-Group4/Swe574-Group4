@@ -151,8 +151,7 @@
                 <span><a href="{{ tag_obj.tag_value }}" class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{
                         tag_obj.tag_key }} </a></span>
                 {% endfor %}
-                <!--<button type="button" class="w3-white w3-border w3-border-white"><a  class="w3-teal w3-button w3-round-xxlarge" href="/tag/{{article.article_id}}">Add Tag</a></button>
-        -->
+
             </p>
             <p><strong class="w3-text-gray">Rank:</strong> {{article.rank}}</p>
             <hr>
@@ -213,7 +212,6 @@
                     success: function (response) {
                         url = $(location).attr('href')
                         here = url.split('radio=')[1].split('&keywords=')[0]
-                        // alert(yes.split('radio=')[1])
                         if (here === "desc") {
                             window.location.href = url.replace("desc", "asc");
                         }
