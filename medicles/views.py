@@ -342,6 +342,12 @@ def add_tag(request, article_id):
 
 @ login_required
 def add_annotation(request, article_id):
+    """
+       This function helps you to annote the article.
+       * You can use just free text with the highlgihted part
+         After annotation is completed, it will show the annotated part
+         in the article abstract.
+       """
     alert_flag = False
     if request.method == 'POST':
         form = AnnotationForm(request.POST)
@@ -821,7 +827,12 @@ def getUsersFromTagId(tags) -> list:
     return userList
 
 
+
 def ajax_load_annotation(request):
+    """
+        Returns previously annotated items to the
+        article details page.
+    """
     if request.is_ajax():
         articleId = request.GET.get("articleId")
         objects_filter = AnnotationModel.objects.all()
