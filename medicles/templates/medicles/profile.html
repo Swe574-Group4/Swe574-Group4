@@ -181,10 +181,11 @@
         {% if returnedTagArticles.items %}
         {% for tag, article in returnedTagArticles.items %}
         <div class="recentTags">
-            <h3>Tag: <a href="{{ tag.tag_value }}" class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{
-                    tag.tag_key }} </a></h3>
-            <h3>Article: <a class="w3-text-teal" href="{% url 'medicles:detail' article.article_id %}">{{
-                    article.article_title|slice:"50" }}</a> </h3>
+            <h3>Tag: <a href="{{ tag.tag_value }}"
+                    class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{tag.tag_key }} </a></h3>
+            <h3>Article: <a class="w3-text-teal"
+                    href="{% url 'medicles:detail' article.article_id %}">{{article.article_title|slice:"50" }}</a>
+            </h3>
 
             <hr>
         </div>
