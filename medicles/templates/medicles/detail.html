@@ -233,11 +233,11 @@
                              class="w3-button w3-round-xlarge w3-yellow w3-padding-medium">{{ tag_obj.tag_key }} </a></span>
                 {% endfor %}
             </p>
-{% if user.is_authenticated %}
-            <button type="button" style="background: none; border: none" class="collapsible icon w3-text-teal">
-                Click the items below in to see annotation details
-            </button>
-      {% endif %}
+            {% if user.is_authenticated %}
+                <button type="button" style="background: none; border: none" class="collapsible icon w3-text-teal">
+                    Click the items below to see annotation details
+                </button>
+            {% endif %}
             <div class="content">
                 <ul id="annotation_list_view">
                 </ul>
@@ -245,17 +245,8 @@
         </div>
     </div>
 
-    <div class="float-child" id="annotationInfo-division" hidden="true"
+    <div class="float-child" id="annotation-info-division" hidden="true"
          style="height: 600px; width: 360px; border: none; margin-left: 15px">
-
-        <!-- Annotation List-->
-
-        <div hidden id="annotation_input_box" class="row" style="overflow-y: scroll; height:600px;">
-            <h6 class="w3-text-teal"> Annotations </h6>
-
-            <h6 class="w3-text-teal" id="annotation_input_value_for_list"
-                style="padding-right: 10px; font-size: 85%; text-align: start">Row </h6>
-        </div>
 
         <!-- Annotation Individual Value-->
         <button style=" background: none; float: right; border: none; padding-top: 10px" class="w3-text-teal"
@@ -278,12 +269,14 @@
         <div class="row" style="height: 50px; margin-top: 7px">
             <h6 class="w3-text-teal" style="display: inline-block;vertical-align: middle;"><b>
                 Created By:</b></h6>
-            <h6 id="annotation_creator_value" style="display: inline-block;vertical-align: middle;">
-                Row </h6>
+            <a id="annotation_creator_value" style="display: inline-block;vertical-align: middle;">
+                Row </a>
         </div>
 
 
     </div>
+
+</div>
 
 </body>
 
@@ -291,9 +284,7 @@
 
     <div class="float-container" id="footer">
 
-        <div class="float-child" id="tag-division"
-             style="height: 450px; border-bottom-left-radius: 5px;  border-top-left-radius: 5px">
-            <div class="w3-container w3-container-teal  w3-margin-left">
+            <div id="tag-division-header" class="w3-container w3-container-teal  w3-margin-left">
                 <h4 id="tagHeader" title="Tag me" class="w3-text-teal w3-left w3-text-opacity">Tag the article either
                     using Wikidata
                     tags or using your own tags</h4>
@@ -302,7 +293,7 @@
                     Switch to annotation
                 </a>
             </div>
-            <form action="{% url 'medicles:detail' article.article_id %}" method="post" class="w3-container">
+            <form id="tag-division-detail" action="{% url 'medicles:detail' article.article_id %}" method="post" class="w3-container">
                 {% csrf_token %}
                 <div class="w3-margin-left w3-padding-24">
 
@@ -311,26 +302,20 @@
                               name="user_def_tag_key" id="id_user_def_tag_key"
                               class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
                               style="width:80%; border-radius: 8px"></textarea>
-
-                    <br><br>
+                    <br>
                     <label for="tag_key"><b></b></label>
                     <textarea type="text" placeholder="Search tag from Wikidata.." name="tag_key" id="id_tag_key"
                               class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
                               style="width:80%; border-radius: 8px"></textarea>
-                    <br><br>
                     <input type="submit" value="Add Tag" id="tagBT" class="w3-teal w3-button w3-round-xxlarge"
-                           style="width:22%">
-                    <br><br>
+                           style="width:18%; float: right">
 
 
                     <br><br><br><br><br><br><br><br><br><br>
                 </div>
             </form>
-        </div>
 
-        <div class="float-child" id="annotate-division" hidden
-             style="height: 450px ; border-bottom-right-radius: 5px;  border-top-right-radius: 5px">
-            <div class="w3-container w3-container-teal  w3-margin-left">
+            <div hidden id="annotate-division-header" class="w3-container w3-container-teal  w3-margin-left">
                 <h4 id="tagHeader" title="Tag me" class="w3-text-teal w3-left w3-text-opacity">
                     Annotate the highlighted section </h4>
                 <a href="javascript:void(0);" class="icon w3-text-teal" style="margin-left: 30px; float: right"
@@ -338,35 +323,38 @@
                     Switch to tagging
                 </a>
             </div>
-            <form action="{% url 'medicles:detail' article.article_id %}" method="post" class="w3-container">
+            <form hidden id="annotate-division-detail" action="{% url 'medicles:detail' article.article_id %}" method="post" class="w3-container">
                 {% csrf_token %}
                 <div class="w3-margin-left w3-padding-24">
 
-                    <textarea type="text" placeholder="Text to be annotated"
+                    <textarea  maxlength="5000" type="text" placeholder="Text to be annotated"
                               readonly
                               name="user_def_annotation_key" id="textToBeAnnotated"
                               class="w3-left-align w3-button w3-white w3-border w3-border-teal w3-round-xxlarge w3-hover-gray"
-                              style="width:60%; border-radius: 8px"></textarea>
+                              style="width:80%; border-radius: 8px"></textarea>
 
                     <a href="javascript:void(0);" class="icon w3-text-teal" style="margin-left: 30px"
                        onclick="cancelAnnotationProcess()">
                         Cancel Selection
                     </a>
 
-                    <br><br>
+                    <br>
                     <label for="annotation_key"><b></b></label>
+
                     <textarea
                             class=" w3-border-teal"
-                            style="border-radius: 8px; width: 100%; padding: 7px"
+                            style="border-radius: 8px; width: 80%; padding: 7px"
                             disabled
                             id="annotationField"
                             name="annotation_key"
                             placeholder="Annotation" cols="40" rows="5"></textarea>
 
+                    <input type="submit" value="Add Annotation" id="annotationBT"
+                           class="w3-teal w3-button w3-round-xxlarge" style="width:18%; float: right" disabled>
+
+
                     <br><br>
 
-                    <input type="submit" value="Add Annotation" id="annotationBT"
-                           class="w3-teal w3-button w3-round-xxlarge" style="width:22%" disabled>
 
                     <label for="annotation_indices"><b></b></label>
                     <input name="annotation_start_index" type="hidden" id="annotationStartIndex"
@@ -384,7 +372,6 @@
                     <br><br><br><br><br><br><br><br><br><br>
                 </div>
             </form>
-        </div>
 
     </div>
 {% else %}
@@ -420,15 +407,22 @@
     <!-- Toggle between annotation and tag feature-->
 
     function switchToTagging() {
-        document.getElementById('tag-division').hidden = false
-        document.getElementById('annotate-division').hidden = true
+        document.getElementById('tag-division-detail').hidden = false
+        document.getElementById('tag-division-header').hidden = false
+
+        document.getElementById('annotate-division-detail').hidden = true
+        document.getElementById('annotate-division-header').hidden = true
+
         showAllAnnotatedItems()
     }
 
     function switchToAnnotation() {
         document.getElementById("articleAbstract").innerHTML = document.getElementById("articleAbstractCopy").innerHTML
-        document.getElementById('tag-division').hidden = true
-        document.getElementById('annotate-division').hidden = false
+        document.getElementById('tag-division-detail').hidden = true
+        document.getElementById('tag-division-header').hidden = true
+
+        document.getElementById('annotate-division-detail').hidden = false
+        document.getElementById('annotate-division-header').hidden = false
     }
 
     <!-- Get previous annotations-->
@@ -481,15 +475,19 @@
     <!-- Show previous annotation details-->
 
     function showAnnotationValues(index, annotated_text) {
-        document.getElementById("annotationInfo-division").hidden = false
+        document.getElementById("annotation-info-division").hidden = false
         document.getElementById("article-division").setAttribute("style", "width:1000px")
         document.getElementById("annotationBT").disabled = true
         // set annotation box values
 
         let item = annotationList[index]
         $('#annotation_input_value').text(item.body.value);
-        $('#annotation_date_value').text(item.created);
         $('#annotation_creator_value').text(item.creator.name);
+        document.getElementById("annotation_creator_value").href = "http://medicles.northeurope.azurecontainer.io:8000/profile/" + item.creator.id;
+        $('#annotation_date_value').text(item.created);
+
+        //<a href='http://localhost:8000/profile/1/'> item.creator.name</a>
+
 
         // show annotation highlight on article abstract
         const el = document.getElementById("articleAbstract")
@@ -506,7 +504,7 @@
 
     function dismissAnnotationValuesBox() {
         document.getElementById("articleAbstract").innerHTML = document.getElementById("articleAbstractCopy").innerHTML
-        document.getElementById("annotationInfo-division").hidden = true
+        document.getElementById("annotation-info-division").hidden = true
         document.getElementById("article-division").setAttribute("style", "width:fit-content");
         document.getElementById("annotationBT").disabled = false
         switchToTagging()
