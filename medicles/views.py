@@ -455,13 +455,14 @@ def signup(request):
         form = SingupForm()
     return render(request, 'medicles/signup.html', {'form': form})
 
-
+#Prepare user profile page
 def profile(request, user_id):
     user = User.objects.get(pk=user_id)
     followerCount = Action.objects.filter(target_id=user.id, verb=1).count()
     followingCount = Action.objects.filter(user_id=user.id, verb=1).count()
 
     tags = []
+    #get tags of an user
     try:
         tags = get_list_or_404(Tag, user=user_id)
     except:
@@ -470,19 +471,15 @@ def profile(request, user_id):
     tagKeys = []
     for tag in tags:
         tagKeys.append(tag.tag_key)
-
+    #get most popular 3 tags of an user
     c = Counter(tagKeys)
     mostPopularTags = c.most_common(3)
     returnedTags = getReturnedTags(mostPopularTags, tags)
     returnedTagArticles = getArticlesFromTagId(tags)
 
-    for tag1, article1 in returnedTagArticles.items():
-        print(tag1.id)
-        print(article1.article_id)
-
     # retrive the users favourited article in terms of article_id (PMID) from the FavouriteListTable
     users_favourite_list = FavouriteListTable.objects.filter(user=user.id, )
-    print(users_favourite_list)
+
     # The favorited article_id (PMID) are utilized the to filter Article objects and
     # get a query set of favourited article objects from Article table
     article_id_list = []
@@ -502,7 +499,7 @@ def profile(request, user_id):
                    'followingCount': followingCount, 'returnedTagArticles': returnedTagArticles,
                    'paginated_favourite_articles': paginated_favourite_articles}, )
 
-
+# get tag object from tag keys
 def getReturnedTags(mostPopularTags, tags):
     returnedTags = []
     for mostPopularTag in mostPopularTags:
@@ -511,7 +508,7 @@ def getReturnedTags(mostPopularTags, tags):
                 returnedTags.append(tag)
     return returnedTags
 
-
+# get article list from tags
 def getArticlesFromTagId(tags):
     articles = {}
     sql2 = 'select * from medicles_article where article_id = (select article_id from medicles_tag_article where tag_id = %s)'

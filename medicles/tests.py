@@ -1,13 +1,13 @@
+import datetime
 from datetime import datetime
+
 from django.contrib.auth.models import User
-from django.http import response
 from django.test import TestCase, Client
 
-from medicles.views import get_published_date, get_target_article_url, get_target_search_url, get_user_fullname, get_user_profile_url, search, user_search_activity
-from .models import Article, Search, Tag
 from medicles import services
-import datetime
-from django.urls import reverse
+from medicles.views import get_published_date, get_target_article_url, get_target_search_url, get_user_fullname, \
+    get_user_profile_url, user_search_activity, getReturnedTags
+from .models import Article, Search, Tag
 
 
 # Create your tests here.
@@ -241,3 +241,12 @@ class ArticleTests(TestCase):
             print(article)
         count = Article.objects.all().count()
         self.assertEqual(count, len(single_article_list))
+
+    def test_returned_tags(self):
+        tag1 = Tag.objects.create(tag_key="reflux")
+        tag2 = Tag.objects.create(tag_key="schizophrenia")
+        tags = [tag1, tag2]
+        mostPopularTags = [["reflux"], ["sushi"]]
+
+        returnedTags = getReturnedTags(mostPopularTags, tags)
+        self.assertEqual(returnedTags[0].tag_key, tag1.tag_key)
