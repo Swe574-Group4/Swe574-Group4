@@ -9,6 +9,7 @@ from django.db.models import JSONField
 from django.contrib.auth import get_user_model
 from django.contrib.auth.signals import user_logged_in
 
+
 # Create your models here.
 
 # Article will be filled Entrez API information.
@@ -31,10 +32,11 @@ class Article(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         Article.objects.update(search_vector=(
-            SearchVector('article_abstract', weight='A')
-            + SearchVector('keyword_list', weight='B')
+                SearchVector('article_abstract', weight='A')
+                + SearchVector('keyword_list', weight='B')
         )
         )
+
 
 # This model is used for Tagging functionality
 class Tag(models.Model):
@@ -61,6 +63,7 @@ class Contact(models.Model):
     def __str__(self) -> str:
         return f'{self.user_from} follow {self.user_to}'
 
+
 # Add following field to User dynamically
 # user_model = get_user_model()
 # user_model.add_to_class('following',
@@ -75,6 +78,7 @@ class Search(models.Model):
     term = models.TextField(blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
 
+
 # This model is used for Annotation
 class Annotation(models.Model):
     article = ManyToManyField(Article)
@@ -85,9 +89,9 @@ class Annotation(models.Model):
     annotation_value = models.CharField(blank=True, null=True, max_length=100)
     annotation_json = JSONField(default=dict)
 
+
 # This model is used for Favourited Articles
 class FavouriteListTable(models.Model):
-
     article = models.ForeignKey(Article,
                                 db_index=True,
                                 blank=True,
@@ -99,16 +103,19 @@ class FavouriteListTable(models.Model):
                              null=True,
                              on_delete=CASCADE)
 
+
 class CustomUser(models.Model):
     user = models.ForeignKey('auth.User',
                              db_index=True,
                              blank=True,
                              null=True,
                              on_delete=CASCADE)
-    last_login = models.DateTimeField( blank=True, null=True,)
+    last_login = models.DateTimeField(blank=True, null=True, )
+
 
 def save_last_login(sender, user, **kwargs):
     user = User.objects.get(pk=user.id)
     CustomUser(user=user, last_login=user.last_login).save()
+
 
 user_logged_in.connect(save_last_login, dispatch_uid="save_last_login")
