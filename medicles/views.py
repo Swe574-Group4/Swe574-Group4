@@ -419,6 +419,11 @@ def add_annotation(request, article_id):
                     # annotation.save()
                     # annotation.article.add(article_will_be_updated)
                     # annotation.user.add(user_will_be_updated)
+                    annotation = Annotation(annotation_key=user_def_annotation_key,
+                                            annotation_value=annotation_input, article_id=article_id)
+
+                    annotation.save(annotation)
+
 
                 except IntegrityError:
                     alert_flag = True
